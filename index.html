@@ -2,344 +2,361 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LabApp - مختبر العناية بالبشرة</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LabApp </title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #ffffff;
     --bg2: #f8f9fa;
     --bg3: #f1f3f5;
     --card: #ffffff;
-    --card2: #f8f9fa;
     --border: rgba(0,0,0,0.08);
-    --border2: rgba(0,0,0,0.12);
     --accent: #89CFF0;
-    --accent2: #A1DAF5;
     --text: #2d3436;
     --text2: #636e72;
-    --text3: #b2bec3;
     --success: #06d6a0;
     --warn: #ffb703;
-    --purple: #a29bfe;
-    --cyan: #00b4d8;
-    --glow: rgba(137, 207, 240, 0.2);
+    --shadow: 0 4px 12px rgba(0,0,0,0.05);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  
   body {
     font-family: 'Tajawal', sans-serif;
     background: var(--bg);
     color: var(--text);
-    min-height: 100vh;
+    line-height: 1.6;
     overflow-x: hidden;
   }
 
-  .app { display: flex; flex-direction: column; min-height: 100vh; }
-
+  /* ---- HEADER ---- */
   header {
-    background: var(--bg2);
+    background: var(--bg);
     border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 64px;
+    padding: 0 20px;
+    height: 60px;
     display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 1000;
   }
-  .logo {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 22px; font-weight: 800;
-  }
-  .logo-icon {
-    width: 36px; height: 36px; border-radius: 10px;
-    background: linear-gradient(135deg, var(--accent), var(--purple));
-    display: flex; align-items: center; justify-content: center; font-size: 18px;
-    color: #fff;
-  }
+
+  .logo { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
   .logo span { color: var(--accent); }
 
-  nav {
-    display: flex; gap: 4px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 4px;
-  }
-  .nav-btn {
-    padding: 7px 18px; border-radius: 8px; border: none;
-    background: transparent; color: var(--text2);
-    font-family: 'Tajawal', sans-serif; font-size: 14px; font-weight: 500;
-    cursor: pointer; transition: all 0.2s;
-  }
-  .nav-btn.active {
-    background: var(--accent);
-    color: #fff;
-    box-shadow: 0 0 20px var(--glow);
-  }
-  .nav-btn .badge {
-    background: rgba(255,255,255,0.3);
-    border-radius: 10px; padding: 1px 7px; font-size: 11px;
+  /* ---- HAMBURGER MENU ---- */
+  .menu-btn {
+    background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text);
+    padding: 5px; display: flex; align-items: center;
   }
 
-  main { flex: 1; padding: 28px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
-  .page { display: none; }
+  .side-menu {
+    position: fixed; top: 0; right: -100%; width: 280px; height: 100%;
+    background: var(--bg); z-index: 2000; transition: 0.3s;
+    box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+    padding: 20px; display: flex; flex-direction: column; gap: 15px;
+  }
+  .side-menu.open { right: 0; }
+  
+  .menu-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4); 
+    display: none; z-index: 1500; backdrop-filter: blur(2px);
+  }
+  .menu-overlay.show { display: block; }
+
+  .menu-link {
+    padding: 15px; border-radius: 12px; border: none; background: var(--bg2);
+    color: var(--text); font-family: 'Tajawal'; font-size: 16px; font-weight: 600;
+    text-align: right; cursor: pointer; transition: 0.2s;
+  }
+  .menu-link.active { background: var(--accent); color: #fff; }
+
+  /* ---- MAIN CONTENT ---- */
+  main { padding: 20px; max-width: 100%; }
+  .page { display: none; animation: fadeIn 0.3s ease; }
   .page.active { display: block; }
 
-  .page-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 28px;
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---- UI COMPONENTS ---- */
+  .barrel-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
   }
-  .page-title { font-size: 26px; font-weight: 800; color: var(--text); }
-  .page-sub { font-size: 14px; color: var(--text3); margin-top: 4px; }
+
+  .barrel-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 15px 10px; display: flex; flex-direction: column;
+    align-items: center; text-align: center; box-shadow: var(--shadow);
+  }
+
+  .barrel-wrap { width: 80px; height: 80px; margin-bottom: 10px; }
+  canvas { width: 80px; height: 80px; border-radius: 50%; }
 
   .btn {
-    padding: 10px 20px; border-radius: 10px; border: none;
-    font-family: 'Tajawal', sans-serif; font-size: 14px; font-weight: 600;
-    cursor: pointer; transition: all 0.2s; display: inline-flex;
-    align-items: center; gap: 8px;
+    padding: 12px; border-radius: 12px; border: none; font-family: 'Tajawal';
+    font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
   }
-  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 15px var(--glow); }
-  .btn-ghost { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+  .btn-primary { background: var(--accent); color: #fff; }
   .btn-success { background: var(--success); color: #fff; }
-  .btn-danger { background: rgba(137, 207, 240, 0.1); color: var(--accent); border: 1px solid var(--accent); }
-  .btn-sm { padding: 6px 14px; font-size: 13px; border-radius: 8px; }
+  .btn-danger { background: #fff; color: var(--accent); border: 1px solid var(--accent); font-size: 12px; padding: 6px; }
 
-  .barrel-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 16px;
+  /* ---- FORMS ---- */
+  input {
+    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+    margin-bottom: 12px; font-family: 'Tajawal'; font-size: 14px;
   }
-  .barrel-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px 12px 14px;
-    display: flex; flex-direction: column; align-items: center;
-    transition: all 0.25s; position: relative;
-  }
-  .barrel-card.low-stock { border-color: var(--warn); }
-  .low-badge {
-    position: absolute; top: 10px; left: 10px;
-    background: var(--warn); color: #fff;
-    font-size: 10px; padding: 2px 7px; border-radius: 6px; font-weight: 600;
-  }
-  .barrel-wrap { width: 90px; height: 90px; position: relative; margin-bottom: 10px; }
-  canvas.barrel-canvas { width: 90px; height: 90px; border-radius: 50%; }
 
-  .toasts {
-    position: fixed; bottom: 24px; left: 50%;
-    transform: translateX(-50%); z-index: 9999;
-    display: flex; flex-direction: column; gap: 8px;
+  /* ---- LAB PAGE ---- */
+  .ing-item {
+    background: var(--bg2); padding: 12px; border-radius: 15px;
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
   }
-  .toast {
-    background: #333; border-radius: 12px; padding: 12px 20px;
-    font-size: 14px; color: #fff;
-  }
-  .toast.success { background: var(--success); }
-  .toast.warn { background: var(--warn); }
-  .toast.error { background: var(--accent); }
+  .ing-qty-input { width: 70px !important; margin: 0 !important; text-align: center; padding: 5px !important; }
 
-  .notif-dot {
-    position: absolute; top: 5px; right: 5px;
-    width: 9px; height: 9px; border-radius: 50%;
-    background: var(--warn); border: 2px solid var(--bg2);
-    display: none;
+  /* ---- TOASTS ---- */
+  .toasts { position: fixed; top: 70px; left: 20px; right: 20px; z-index: 3000; }
+  .toast { 
+    background: #333; color: #fff; padding: 12px 20px; border-radius: 10px; 
+    margin-bottom: 8px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
   }
-  .notif-dot.show { display: block; }
 </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <div class="logo">
-      <div class="logo-icon">L</div>
-      Lab<span>App</span>
-    </div>
-    <nav id="mainNav">
-      <button class="nav-btn active" onclick="showPage('inventory')" data-page="inventory">المخزون <span class="badge" id="invBadge">0</span></button>
-      <button class="nav-btn" onclick="showPage('lab')" data-page="lab">المعمل</button>
-      <button class="nav-btn" onclick="showPage('products')" data-page="products">المنتجات <span class="badge" id="prodBadge">0</span></button>
-    </nav>
-    <button class="btn-ghost" style="padding: 8px; border-radius: 10px; position: relative;" onclick="showNotifications()">
-      N <div class="notif-dot" id="notifDot"></div>
-    </button>
-  </header>
 
-  <main>
-    <div class="page active" id="page-inventory">
-      <div class="page-header">
-        <div>
-          <div class="page-title">المخزون</div>
-          <div class="page-sub">إدارة مواد العناية بالبشرة</div>
-        </div>
-        <button class="btn btn-primary" onclick="openAddModal()">إضافة مادة</button>
-      </div>
-      <div class="barrel-grid" id="barrelGrid"></div>
-    </div>
+<header>
+  <button class="menu-btn" onclick="toggleMenu()">☰</button>
+  <div class="logo">Lab<span>App</span></div>
+  <div style="width: 34px;"></div> </header>
 
-    <div class="page" id="page-lab">
-      <div class="page-header"><div class="page-title">المعمل</div></div>
-      <div id="ingredientList"></div>
-      <div style="margin-top: 20px; padding: 20px; background: var(--bg2); border-radius: 16px;">
-        <div id="totalPrice" style="font-size: 24px; font-weight: 700; color: var(--success);">0.00 ج</div>
-        <button class="btn btn-success" style="width:100%; margin-top:10px" onclick="buildProduct()">بناء المنتج</button>
-      </div>
-    </div>
-
-    <div class="page" id="page-products">
-      <div class="page-header"><div class="page-title">المنتجات</div></div>
-      <div class="barrel-grid" id="productsGrid"></div>
-    </div>
-  </main>
+<div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+<div class="side-menu" id="sideMenu">
+  <div style="font-weight: 800; font-size: 20px; margin-bottom: 20px;">القائمة</div>
+  <button class="menu-link active" data-nav="inventory" onclick="navTo('inventory')">المخزون</button>
+  <button class="menu-link" data-nav="lab" onclick="navTo('lab')">المعمل</button>
+  <button class="menu-link" data-nav="products" onclick="navTo('products')">المنتجات</button>
 </div>
 
-<div class="modal-overlay" id="addModal">
-  <div class="modal">
-    <div class="modal-title">إضافة مادة</div>
-    <input type="text" id="matName" placeholder="اسم المادة" style="width:100%; margin-bottom:10px; padding:10px">
-    <input type="number" id="matQty" placeholder="الكمية" style="width:100%; margin-bottom:10px; padding:10px">
-    <input type="number" id="matPrice" placeholder="السعر" style="width:100%; margin-bottom:10px; padding:10px">
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('addModal')">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveMaterial()">حفظ</button>
+<main>
+  <div class="page active" id="page-inventory">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2 style="font-size: 22px;">المخزون</h2>
+      <button class="btn btn-primary" style="width: auto; padding: 8px 15px;" onclick="openAdd()">+ إضافة</button>
+    </div>
+    <div class="barrel-grid" id="barrelGrid"></div>
+  </div>
+
+  <div class="page" id="page-lab">
+    <h2 style="margin-bottom: 15px;">المعمل</h2>
+    <input type="text" id="prodName" placeholder="اسم المنتج الجديد">
+    <div id="ingList" style="margin-bottom: 20px;"></div>
+    <div style="background: var(--bg2); padding: 20px; border-radius: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span>الإجمالي:</span>
+            <span id="totalPrice" style="font-weight: 800; color: var(--success); font-family: 'Space Grotesk';">0.00 ج</span>
+        </div>
+        <button class="btn btn-success" onclick="buildProduct()">حفظ المنتج</button>
     </div>
   </div>
+
+  <div class="page" id="page-products">
+    <h2 style="margin-bottom: 15px;">منتجاتك</h2>
+    <div id="productsGrid" class="barrel-grid"></div>
+  </div>
+</main>
+
+<div class="menu-overlay" id="addOverlay" style="display: none; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #fff; width: 100%; border-radius: 20px; padding: 25px;">
+        <h3 style="margin-bottom: 15px;">إضافة مادة</h3>
+        <input type="text" id="matName" placeholder="اسم المادة">
+        <input type="number" id="matQty" placeholder="الكمية (جرام)">
+        <input type="number" id="matPrice" placeholder="سعر الجرام">
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="saveMaterial()">حفظ</button>
+            <button class="btn btn-ghost" style="background: var(--bg3);" onclick="closeAdd()">إلغاء</button>
+        </div>
+    </div>
 </div>
 
 <div class="toasts" id="toasts"></div>
 
 <script>
-// --- DATA LAYER ---
-const COLORS = ['#89CFF0','#a29bfe','#00b4d8','#06d6a0','#ffb703'];
 let materials = JSON.parse(localStorage.getItem('lab_materials')) || [];
 let products = JSON.parse(localStorage.getItem('lab_products')) || [];
 const waveData = {};
 window.shakeIntensity = 0;
 
-// --- MOTION LOGIC (SHAKE & TILT) ---
+// --- NAVIGATION & MENU ---
+function toggleMenu() {
+    document.getElementById('sideMenu').classList.toggle('open');
+    document.getElementById('menuOverlay').classList.toggle('show');
+}
+
+function navTo(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
+    document.getElementById('page-' + pageId).classList.add('active');
+    document.querySelector(`[data-nav="${pageId}"]`).classList.add('active');
+    toggleMenu();
+    if(pageId === 'inventory') renderInventory();
+    if(pageId === 'lab') renderLab();
+    if(pageId === 'products') renderProducts();
+}
+
+// --- SHAKE & TILT ---
 window.addEventListener('devicemotion', (e) => {
-    const acc = e.acceleration;
+    let acc = e.acceleration;
     if (!acc) return;
-    const totalAcc = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
-    if (totalAcc > 15) {
-        window.shakeIntensity = Math.min(totalAcc / 40, 1.5);
-    } else {
-        window.shakeIntensity *= 0.9;
-    }
+    let total = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
+    window.shakeIntensity = total > 15 ? Math.min(total/40, 1.2) : window.shakeIntensity * 0.9;
 });
 
 window.addEventListener('deviceorientation', (e) => {
-    const tilt = (e.gamma || 0) / 90 * 0.15;
+    let tilt = (e.gamma || 0) / 90 * 0.15;
     Object.values(waveData).forEach(s => s.targetTilt = -tilt);
 });
 
-document.addEventListener('mousemove', e => {
-    const t = (e.clientX / window.innerWidth - 0.5) * 0.12;
-    Object.values(waveData).forEach(s => s.targetTilt = t);
-});
+// --- CORE FUNCTIONS ---
+function createBarrel(canvas, color, fill) {
+    const id = canvas.dataset.matid;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width = 160;
+    const H = canvas.height = 160;
+    const r = W/2;
 
-// --- RENDER ENGINE ---
-function createBarrel(canvas, color, fillPct) {
-  const id = canvas.dataset.matid;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width = 180;
-  const H = canvas.height = 180;
-  const r = W / 2;
+    if (!waveData[id]) waveData[id] = { offset: 0, tiltX: 0, targetTilt: 0 };
+    const state = waveData[id];
 
-  if (!waveData[id]) waveData[id] = { offset: 0, tiltX: 0, targetTilt: 0, rafId: null };
-  const state = waveData[id];
-  state.fillPct = fillPct;
-  state.color = color;
+    function draw() {
+        ctx.clearRect(0,0,W,H);
+        ctx.save();
+        ctx.beginPath(); ctx.arc(r,r,r-2,0,Math.PI*2); ctx.clip();
+        
+        let shk = window.shakeIntensity || 0;
+        let liquidTop = H * (1 - fill);
+        let amp = (H * 0.04) + (shk * 20);
 
-  function draw() {
-    ctx.clearRect(0,0,W,H);
-    ctx.save();
-    ctx.beginPath(); ctx.arc(r,r,r-2,0,Math.PI*2); ctx.clip();
+        ctx.fillStyle = color + '22';
+        ctx.fillRect(0,0,W,H);
 
-    const hexToRgb = (hex) => {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : {r:0,g:0,b:0};
-    };
-    const rgb = hexToRgb(state.color);
-    
-    // EFFECT: Shake Intensity affects Amplitude and Speed
-    const currentShake = window.shakeIntensity || 0;
-    const liquidTop = H * (1 - state.fillPct);
-    const amp = (H * 0.035) + (currentShake * 15);
+        ctx.beginPath();
+        ctx.moveTo(0, liquidTop);
+        for (let x = 0; x <= W; x += 5) {
+            let y = liquidTop + Math.sin((x/W)*Math.PI*4 + state.offset)*amp + state.tiltX*(x-r);
+            ctx.lineTo(x, y);
+        }
+        ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.fill();
+        ctx.restore();
 
-    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.15)`;
-    ctx.fillRect(0,0,W,H);
-
-    ctx.beginPath();
-    ctx.moveTo(0, liquidTop);
-    for (let x = 0; x <= W; x += 3) {
-      const y = liquidTop + Math.sin((x / W) * Math.PI * 4 + state.offset) * amp + state.tiltX * (x - r);
-      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        state.offset += 0.05 + (shk * 0.2);
+        state.tiltX += (state.targetTilt - state.tiltX) * 0.1;
+        requestAnimationFrame(draw);
     }
-    ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
-    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.75)`;
-    ctx.fill();
-
-    ctx.restore();
-    state.offset += 0.04 + (currentShake * 0.2);
-    state.tiltX += (state.targetTilt - state.tiltX) * 0.08;
-    state.rafId = requestAnimationFrame(draw);
-  }
-  if (state.rafId) cancelAnimationFrame(state.rafId);
-  draw();
+    draw();
 }
 
-// --- APP LOGIC ---
 function renderInventory() {
-  const grid = document.getElementById('barrelGrid');
-  grid.innerHTML = materials.map(m => `
-    <div class="barrel-card ${m.quantityGrams < 50 ? 'low-stock' : ''}">
-      <div class="barrel-wrap">
-        <canvas class="barrel-canvas" data-matid="${m.id}" data-fill="${Math.min(1, m.quantityGrams/500)}" data-color="${m.color}"></canvas>
-      </div>
-      <div style="font-weight:700; font-size:13px">${m.name}</div>
-      <div style="color:var(--text3); font-size:12px">${m.quantityGrams}g</div>
-      <button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="deleteMaterial(${m.id})">حذف</button>
-    </div>
-  `).join('');
-  grid.querySelectorAll('.barrel-canvas').forEach(c => createBarrel(c, c.dataset.color, parseFloat(c.dataset.fill)));
-  document.getElementById('invBadge').textContent = materials.length;
+    const grid = document.getElementById('barrelGrid');
+    grid.innerHTML = materials.map(m => `
+        <div class="barrel-card">
+            <div class="barrel-wrap"><canvas data-matid="${m.id}"></canvas></div>
+            <div style="font-weight:800; font-size:14px">${m.name}</div>
+            <div style="font-size:12px; color:var(--text2)">${m.qty}g</div>
+            <button class="btn btn-danger" onclick="deleteMat(${m.id})">حذف</button>
+        </div>
+    `).join('');
+    grid.querySelectorAll('canvas').forEach(c => {
+        let m = materials.find(x => x.id == c.dataset.matid);
+        createBarrel(c, m.color, Math.min(1, m.qty/500));
+    });
 }
+
+function openAdd() { document.getElementById('addOverlay').style.display = 'flex'; }
+function closeAdd() { document.getElementById('addOverlay').style.display = 'none'; }
 
 function saveMaterial() {
-  const name = document.getElementById('matName').value;
-  const qty = parseFloat(document.getElementById('matQty').value);
-  const price = parseFloat(document.getElementById('matPrice').value);
-  if (!name || isNaN(qty)) return;
-  
-  materials.push({ id: Date.now(), name, quantityGrams: qty, pricePerGram: price, color: COLORS[materials.length % COLORS.length] });
-  localStorage.setItem('lab_materials', JSON.stringify(materials));
-  closeModal('addModal');
-  renderInventory();
-  toast('تمت الإضافة', 'success');
+    let name = document.getElementById('matName').value;
+    let qty = parseFloat(document.getElementById('matQty').value);
+    let price = parseFloat(document.getElementById('matPrice').value);
+    if(!name || isNaN(qty)) return;
+
+    materials.push({
+        id: Date.now(), name, qty, price,
+        color: ['#89CFF0', '#A1CAF1', '#72A0C1', '#B0E0E6'][materials.length % 4]
+    });
+    localStorage.setItem('lab_materials', JSON.stringify(materials));
+    closeAdd();
+    renderInventory();
+    toast('تمت الإضافة بنجاح');
 }
 
-function deleteMaterial(id) {
-  materials = materials.filter(m => m.id !== id);
-  localStorage.setItem('lab_materials', JSON.stringify(materials));
-  renderInventory();
+function deleteMat(id) {
+    materials = materials.filter(m => m.id !== id);
+    localStorage.setItem('lab_materials', JSON.stringify(materials));
+    renderInventory();
 }
 
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.querySelector(`[data-page="${name}"]`).classList.add('active');
-  if (name === 'inventory') renderInventory();
+function renderLab() {
+    const list = document.getElementById('ingList');
+    list.innerHTML = materials.map(m => `
+        <div class="ing-item">
+            <div>
+                <div style="font-weight:700">${m.name}</div>
+                <div style="font-size:11px; color:var(--text2)">متاح: ${m.qty}g</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px">
+                <input type="number" class="ing-qty-input" placeholder="0" data-id="${m.id}" oninput="calcTotal()">
+                <span style="font-size:12px">ج</span>
+            </div>
+        </div>
+    `).join('');
 }
 
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-function openAddModal() { document.getElementById('addModal').style.display = 'flex'; }
-function toast(msg, type) {
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.textContent = msg;
-  document.getElementById('toasts').appendChild(t);
-  setTimeout(() => t.remove(), 3000);
+function calcTotal() {
+    let total = 0;
+    document.querySelectorAll('.ing-qty-input').forEach(input => {
+        let g = parseFloat(input.value) || 0;
+        let m = materials.find(x => x.id == input.dataset.id);
+        total += g * m.price;
+    });
+    document.getElementById('totalPrice').textContent = total.toFixed(2) + ' ج';
+}
+
+function buildProduct() {
+    let name = document.getElementById('prodName').value;
+    if(!name) return toast('أدخل اسم المنتج');
+    
+    let total = 0;
+    document.querySelectorAll('.ing-qty-input').forEach(input => {
+        let g = parseFloat(input.value) || 0;
+        if(g > 0) {
+            let m = materials.find(x => x.id == input.dataset.id);
+            m.qty -= g;
+            total += g * m.price;
+        }
+    });
+
+    products.push({ name, total, date: new Date().toLocaleDateString('ar-EG') });
+    localStorage.setItem('lab_materials', JSON.stringify(materials));
+    localStorage.setItem('lab_products', JSON.stringify(products));
+    toast('تم حفظ المنتج وتحديث المخزون');
+    navTo('products');
+}
+
+function renderProducts() {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = products.map(p => `
+        <div class="barrel-card" style="text-align:right; align-items:flex-start; padding:20px">
+            <div style="font-weight:800; font-size:16px; margin-bottom:5px">${p.name}</div>
+            <div style="color:var(--success); font-weight:700">${p.total.toFixed(2)} ج</div>
+            <div style="font-size:11px; color:var(--text2); margin-top:10px">${p.date}</div>
+        </div>
+    `).join('');
+}
+
+function toast(m) {
+    let t = document.createElement('div'); t.className = 'toast'; t.textContent = m;
+    document.getElementById('toasts').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
 }
 
 renderInventory();
