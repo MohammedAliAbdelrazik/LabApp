@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LabApp - مختبر العناية بالبشرة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f8f9fa;
+    --bg3: #f1f3f5;
+    --card: #ffffff;
+    --card2: #f8f9fa;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.12);
+    --accent: #89CFF0;
+    --accent2: #A1DAF5;
+    --text: #2d3436;
+    --text2: #636e72;
+    --text3: #b2bec3;
+    --success: #06d6a0;
+    --warn: #ffb703;
+    --purple: #a29bfe;
+    --cyan: #00b4d8;
+    --glow: rgba(137, 207, 240, 0.2);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 22px; font-weight: 800;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    color: #fff;
+  }
+  .logo span { color: var(--accent); }
+
+  nav {
+    display: flex; gap: 4px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+  }
+  .nav-btn {
+    padding: 7px 18px; border-radius: 8px; border: none;
+    background: transparent; color: var(--text2);
+    font-family: 'Tajawal', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .nav-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 20px var(--glow);
+  }
+  .nav-btn .badge {
+    background: rgba(255,255,255,0.3);
+    border-radius: 10px; padding: 1px 7px; font-size: 11px;
+  }
+
+  main { flex: 1; padding: 28px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .page-title { font-size: 26px; font-weight: 800; color: var(--text); }
+  .page-sub { font-size: 14px; color: var(--text3); margin-top: 4px; }
+
+  .btn {
+    padding: 10px 20px; border-radius: 10px; border: none;
+    font-family: 'Tajawal', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; display: inline-flex;
+    align-items: center; gap: 8px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 15px var(--glow); }
+  .btn-ghost { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: rgba(137, 207, 240, 0.1); color: var(--accent); border: 1px solid var(--accent); }
+  .btn-sm { padding: 6px 14px; font-size: 13px; border-radius: 8px; }
+
+  .barrel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+  }
+  .barrel-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 12px 14px;
+    display: flex; flex-direction: column; align-items: center;
+    transition: all 0.25s; position: relative;
+  }
+  .barrel-card.low-stock { border-color: var(--warn); }
+  .low-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: var(--warn); color: #fff;
+    font-size: 10px; padding: 2px 7px; border-radius: 6px; font-weight: 600;
+  }
+  .barrel-wrap { width: 90px; height: 90px; position: relative; margin-bottom: 10px; }
+  canvas.barrel-canvas { width: 90px; height: 90px; border-radius: 50%; }
+
+  .toasts {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%); z-index: 9999;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    background: #333; border-radius: 12px; padding: 12px 20px;
+    font-size: 14px; color: #fff;
+  }
+  .toast.success { background: var(--success); }
+  .toast.warn { background: var(--warn); }
+  .toast.error { background: var(--accent); }
+
+  .notif-dot {
+    position: absolute; top: 5px; right: 5px;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--warn); border: 2px solid var(--bg2);
+    display: none;
+  }
+  .notif-dot.show { display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">L</div>
+      Lab<span>App</span>
+    </div>
+    <nav id="mainNav">
+      <button class="nav-btn active" onclick="showPage('inventory')" data-page="inventory">المخزون <span class="badge" id="invBadge">0</span></button>
+      <button class="nav-btn" onclick="showPage('lab')" data-page="lab">المعمل</button>
+      <button class="nav-btn" onclick="showPage('products')" data-page="products">المنتجات <span class="badge" id="prodBadge">0</span></button>
+    </nav>
+    <button class="btn-ghost" style="padding: 8px; border-radius: 10px; position: relative;" onclick="showNotifications()">
+      N <div class="notif-dot" id="notifDot"></div>
+    </button>
+  </header>
+
+  <main>
+    <div class="page active" id="page-inventory">
+      <div class="page-header">
+        <div>
+          <div class="page-title">المخزون</div>
+          <div class="page-sub">إدارة مواد العناية بالبشرة</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddModal()">إضافة مادة</button>
+      </div>
+      <div class="barrel-grid" id="barrelGrid"></div>
+    </div>
+
+    <div class="page" id="page-lab">
+      <div class="page-header"><div class="page-title">المعمل</div></div>
+      <div id="ingredientList"></div>
+      <div style="margin-top: 20px; padding: 20px; background: var(--bg2); border-radius: 16px;">
+        <div id="totalPrice" style="font-size: 24px; font-weight: 700; color: var(--success);">0.00 ج</div>
+        <button class="btn btn-success" style="width:100%; margin-top:10px" onclick="buildProduct()">بناء المنتج</button>
+      </div>
+    </div>
+
+    <div class="page" id="page-products">
+      <div class="page-header"><div class="page-title">المنتجات</div></div>
+      <div class="barrel-grid" id="productsGrid"></div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-title">إضافة مادة</div>
+    <input type="text" id="matName" placeholder="اسم المادة" style="width:100%; margin-bottom:10px; padding:10px">
+    <input type="number" id="matQty" placeholder="الكمية" style="width:100%; margin-bottom:10px; padding:10px">
+    <input type="number" id="matPrice" placeholder="السعر" style="width:100%; margin-bottom:10px; padding:10px">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveMaterial()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+// --- DATA LAYER ---
+const COLORS = ['#89CFF0','#a29bfe','#00b4d8','#06d6a0','#ffb703'];
+let materials = JSON.parse(localStorage.getItem('lab_materials')) || [];
+let products = JSON.parse(localStorage.getItem('lab_products')) || [];
+const waveData = {};
+window.shakeIntensity = 0;
+
+// --- MOTION LOGIC (SHAKE & TILT) ---
+window.addEventListener('devicemotion', (e) => {
+    const acc = e.acceleration;
+    if (!acc) return;
+    const totalAcc = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
+    if (totalAcc > 15) {
+        window.shakeIntensity = Math.min(totalAcc / 40, 1.5);
+    } else {
+        window.shakeIntensity *= 0.9;
+    }
+});
+
+window.addEventListener('deviceorientation', (e) => {
+    const tilt = (e.gamma || 0) / 90 * 0.15;
+    Object.values(waveData).forEach(s => s.targetTilt = -tilt);
+});
+
+document.addEventListener('mousemove', e => {
+    const t = (e.clientX / window.innerWidth - 0.5) * 0.12;
+    Object.values(waveData).forEach(s => s.targetTilt = t);
+});
+
+// --- RENDER ENGINE ---
+function createBarrel(canvas, color, fillPct) {
+  const id = canvas.dataset.matid;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = 180;
+  const H = canvas.height = 180;
+  const r = W / 2;
+
+  if (!waveData[id]) waveData[id] = { offset: 0, tiltX: 0, targetTilt: 0, rafId: null };
+  const state = waveData[id];
+  state.fillPct = fillPct;
+  state.color = color;
+
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(r,r,r-2,0,Math.PI*2); ctx.clip();
+
+    const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : {r:0,g:0,b:0};
+    };
+    const rgb = hexToRgb(state.color);
+    
+    // EFFECT: Shake Intensity affects Amplitude and Speed
+    const currentShake = window.shakeIntensity || 0;
+    const liquidTop = H * (1 - state.fillPct);
+    const amp = (H * 0.035) + (currentShake * 15);
+
+    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.15)`;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.beginPath();
+    ctx.moveTo(0, liquidTop);
+    for (let x = 0; x <= W; x += 3) {
+      const y = liquidTop + Math.sin((x / W) * Math.PI * 4 + state.offset) * amp + state.tiltX * (x - r);
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.75)`;
+    ctx.fill();
+
+    ctx.restore();
+    state.offset += 0.04 + (currentShake * 0.2);
+    state.tiltX += (state.targetTilt - state.tiltX) * 0.08;
+    state.rafId = requestAnimationFrame(draw);
+  }
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  draw();
+}
+
+// --- APP LOGIC ---
+function renderInventory() {
+  const grid = document.getElementById('barrelGrid');
+  grid.innerHTML = materials.map(m => `
+    <div class="barrel-card ${m.quantityGrams < 50 ? 'low-stock' : ''}">
+      <div class="barrel-wrap">
+        <canvas class="barrel-canvas" data-matid="${m.id}" data-fill="${Math.min(1, m.quantityGrams/500)}" data-color="${m.color}"></canvas>
+      </div>
+      <div style="font-weight:700; font-size:13px">${m.name}</div>
+      <div style="color:var(--text3); font-size:12px">${m.quantityGrams}g</div>
+      <button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="deleteMaterial(${m.id})">حذف</button>
+    </div>
+  `).join('');
+  grid.querySelectorAll('.barrel-canvas').forEach(c => createBarrel(c, c.dataset.color, parseFloat(c.dataset.fill)));
+  document.getElementById('invBadge').textContent = materials.length;
+}
+
+function saveMaterial() {
+  const name = document.getElementById('matName').value;
+  const qty = parseFloat(document.getElementById('matQty').value);
+  const price = parseFloat(document.getElementById('matPrice').value);
+  if (!name || isNaN(qty)) return;
+  
+  materials.push({ id: Date.now(), name, quantityGrams: qty, pricePerGram: price, color: COLORS[materials.length % COLORS.length] });
+  localStorage.setItem('lab_materials', JSON.stringify(materials));
+  closeModal('addModal');
+  renderInventory();
+  toast('تمت الإضافة', 'success');
+}
+
+function deleteMaterial(id) {
+  materials = materials.filter(m => m.id !== id);
+  localStorage.setItem('lab_materials', JSON.stringify(materials));
+  renderInventory();
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelector(`[data-page="${name}"]`).classList.add('active');
+  if (name === 'inventory') renderInventory();
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function openAddModal() { document.getElementById('addModal').style.display = 'flex'; }
+function toast(msg, type) {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+renderInventory();
+</script>
+</body>
+</html>
