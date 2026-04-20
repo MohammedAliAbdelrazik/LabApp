@@ -128,7 +128,7 @@
 <header>
   <button class="menu-btn" onclick="toggleMenu()">☰</button>
   <div class="logo">Lab<span>App</span></div>
-  <div style="width: 34px;"></div> 
+  <button class="menu-btn" id="sensorBtn" onclick="requestSensorPermissions()" title="تفعيل الحساسات">📱</button>
 </header>
 
 <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
@@ -211,44 +211,114 @@ const SENSORS = {
   gamma: 0    // Rotation around Y axis (roll) - الميل جانباً
 };
 
-// ===== تحديث بيانات الجاذبية من جميع المصادر =====
-window.addEventListener('deviceorientation', (e) => {
-  SENSORS.alpha = (e.alpha || 0);
-  SENSORS.beta = (e.beta || 0);
-  SENSORS.gamma = (e.gamma || 0);
-  
-  // تحويل الزوايا إلى قوة جاذبية (محاكاة الجاذبية الأرضية)
-  // Beta: الميل للأمام/الخلف (يؤثر على محور Y)
-  // Gamma: الميل جانباً (يؤثر على محور X)
-  PHYSICS.gravity.x = Math.sin((SENSORS.gamma * Math.PI) / 180) * 15;  // من -15 إلى +15
-  PHYSICS.gravity.y = 9.81 - Math.sin((SENSORS.beta * Math.PI) / 180) * 8;  // جاذبية مع ميل
-});
+// ===== طلب الوصول للحساسات =====
+let sensorsEnabled = false;
 
-window.addEventListener('devicemotion', (e) => {
-  if (!e.acceleration) return;
-  
-  SENSORS.accelX = e.acceleration.x || 0;
-  SENSORS.accelY = e.acceleration.y || 0;
-  SENSORS.accelZ = e.acceleration.z || 0;
-  
-  // حساب قوة الهز (magnitude)
-  let accelMagnitude = Math.sqrt(
-    SENSORS.accelX ** 2 + 
-    SENSORS.accelY ** 2 + 
-    SENSORS.accelZ ** 2
-  );
-  
-  // إذا كان الهز قوياً، زيادة شدة الاهتزاز
-  if (accelMagnitude > PHYSICS.shakeSensitivity) {
-    PHYSICS.shake = Math.min(
-      accelMagnitude / PHYSICS.shakeSensitivity,
-      PHYSICS.maxShakeIntensity
-    );
+function requestSensorPermissions() {
+  // iOS 13+ و Android Q+ تحتاج permission صريح
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // iOS 13+
+    Promise.all([
+      DeviceOrientationEvent.requestPermission(),
+      DeviceMotionEvent.requestPermission()
+    ])
+    .then(permissions => {
+      if (permissions[0] === 'granted' && permissions[1] === 'granted') {
+        sensorsEnabled = true;
+        enableSensors();
+        toast('✅ تم تفعيل الحساسات بنجاح');
+      } else {
+        toast('❌ تم رفض الوصول للحساسات');
+      }
+    })
+    .catch(err => {
+      console.error('Permission error:', err);
+      enableSensorsFallback();
+    });
   } else {
-    // تقليل الهز تدريجياً
-    PHYSICS.shake *= PHYSICS.damping;
+    // Android و متصفحات أخرى
+    sensorsEnabled = true;
+    enableSensors();
+    toast('✅ الحساسات مفعلة');
   }
-});
+}
+
+function enableSensors() {
+  // تحديث بيانات الجاذبية
+  window.addEventListener('deviceorientation', (e) => {
+    SENSORS.alpha = (e.alpha || 0);
+    SENSORS.beta = (e.beta || 0);
+    SENSORS.gamma = (e.gamma || 0);
+    
+    // تحويل الزوايا إلى قوة جاذبية
+    PHYSICS.gravity.x = Math.sin((SENSORS.gamma * Math.PI) / 180) * 15;
+    PHYSICS.gravity.y = 9.81 - Math.sin((SENSORS.beta * Math.PI) / 180) * 8;
+  }, false);
+
+  // تحديث بيانات الحركة والهز
+  window.addEventListener('devicemotion', (e) => {
+    if (!e.acceleration) return;
+    
+    SENSORS.accelX = e.acceleration.x || 0;
+    SENSORS.accelY = e.acceleration.y || 0;
+    SENSORS.accelZ = e.acceleration.z || 0;
+    
+    let accelMagnitude = Math.sqrt(
+      SENSORS.accelX ** 2 + 
+      SENSORS.accelY ** 2 + 
+      SENSORS.accelZ ** 2
+    );
+    
+    if (accelMagnitude > PHYSICS.shakeSensitivity) {
+      PHYSICS.shake = Math.min(
+        accelMagnitude / PHYSICS.shakeSensitivity,
+        PHYSICS.maxShakeIntensity
+      );
+    } else {
+      PHYSICS.shake *= PHYSICS.damping;
+    }
+  }, false);
+  
+  // تحديث الزر البصري
+  document.getElementById('sensorBtn').style.color = 'var(--success)';
+  document.getElementById('sensorBtn').textContent = '📱✅';
+}
+
+function enableSensorsFallback() {
+  // في حالة المتصفحات القديمة بدون permission
+  try {
+    window.addEventListener('deviceorientation', (e) => {
+      SENSORS.gamma = (e.gamma || 0);
+      SENSORS.beta = (e.beta || 0);
+      PHYSICS.gravity.x = Math.sin((SENSORS.gamma * Math.PI) / 180) * 15;
+      PHYSICS.gravity.y = 9.81 - Math.sin((SENSORS.beta * Math.PI) / 180) * 8;
+    }, false);
+
+    window.addEventListener('devicemotion', (e) => {
+      if (!e.acceleration) return;
+      SENSORS.accelX = e.acceleration.x || 0;
+      SENSORS.accelY = e.acceleration.y || 0;
+      SENSORS.accelZ = e.acceleration.z || 0;
+      
+      let accelMagnitude = Math.sqrt(
+        SENSORS.accelX ** 2 + SENSORS.accelY ** 2 + SENSORS.accelZ ** 2
+      );
+      
+      if (accelMagnitude > PHYSICS.shakeSensitivity) {
+        PHYSICS.shake = Math.min(
+          accelMagnitude / PHYSICS.shakeSensitivity,
+          PHYSICS.maxShakeIntensity
+        );
+      } else {
+        PHYSICS.shake *= PHYSICS.damping;
+      }
+    }, false);
+    
+    sensorsEnabled = true;
+  } catch(e) {
+    toast('⚠️ الحساسات غير متاحة على هذا الجهاز');
+  }
+}
 
 // --- NAVIGATION & MENU ---
 function toggleMenu() {
@@ -535,6 +605,14 @@ function toast(m) {
     document.getElementById('toasts').appendChild(t);
     setTimeout(() => t.remove(), 3000);
 }
+
+// تفعيل الحساسات تلقائياً عند التحميل
+window.addEventListener('DOMContentLoaded', () => {
+  // محاولة تفعيل الحساسات تلقائياً
+  setTimeout(() => {
+    requestSensorPermissions();
+  }, 500);
+});
 
 renderInventory();
 </script>
