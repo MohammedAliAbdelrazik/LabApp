@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>LabApp - Fluid Physics</title>
+<title>LabApp - Fluid Master</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -25,37 +25,37 @@
 
   .side-menu {
     position: fixed; top: 0; right: -100%; width: 280px; height: 100%;
-    background: var(--bg); z-index: 2000; transition: 0.3s;
+    background: var(--bg); z-index: 2000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: -5px 0 20px rgba(0,0,0,0.1); padding: 20px; display: flex; flex-direction: column; gap: 15px;
   }
   .side-menu.open { right: 0; }
   .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 1500; backdrop-filter: blur(2px); }
   .menu-overlay.show { display: block; }
-  .menu-link { padding: 15px; border-radius: 12px; border: none; background: var(--bg2); text-align: right; font-weight: 600; cursor: pointer; }
+
+  .menu-link { padding: 15px; border-radius: 12px; border: none; background: var(--bg2); text-align: right; font-weight: 600; cursor: pointer; transition: 0.2s; }
   .menu-link.active { background: var(--accent); color: #fff; }
 
   main { padding: 20px; }
   .page { display: none; }
   .page.active { display: block; }
   .barrel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  
   .barrel-card { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 15px 10px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
   .barrel-wrap { width: 90px; height: 90px; margin-bottom: 10px; }
   canvas { width: 90px; height: 90px; border-radius: 50%; }
 
   .btn { padding: 12px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .btn-primary { background: var(--accent); color: #fff; }
-  .btn-danger { background: #fff; color: var(--accent); border: 1px solid var(--accent); font-size: 12px; padding: 6px; margin-top: 8px;}
+  .btn-danger { background: #fff; color: var(--accent); border: 1px solid var(--accent); font-size: 11px; padding: 6px; margin-top: 8px; border-radius: 8px; }
   
   input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 12px; outline: none; }
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 3000; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 3000; }
   .modal { background: #fff; width: 100%; border-radius: 20px; padding: 25px; max-width: 400px; }
-  .toasts { position: fixed; top: 70px; left: 20px; right: 20px; z-index: 4000; }
-  .toast { background: #333; color: #fff; padding: 12px; border-radius: 10px; margin-bottom: 8px; text-align: center; font-size: 14px; }
+  .toasts { position: fixed; top: 75px; left: 20px; right: 20px; z-index: 4000; pointer-events: none; }
+  .toast { background: #333; color: #fff; padding: 12px; border-radius: 10px; margin-bottom: 8px; text-align: center; font-size: 13px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 </style>
 </head>
-<body>
-
-<header>
+<body onclick="requestSensorAccess()"> <header>
   <button class="menu-btn" onclick="toggleMenu()">☰</button>
   <div class="logo">Lab<span>App</span></div>
   <div style="width: 34px;"></div>
@@ -72,8 +72,8 @@
 <main>
   <div class="page active" id="page-inventory">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <h2>المخزون</h2>
-      <button class="btn btn-primary" style="width: auto; padding: 8px 15px;" onclick="openAdd()">+ إضافة</button>
+      <h2 style="font-size: 22px;">المخزون</h2>
+      <button class="btn btn-primary" style="width: auto; padding: 8px 15px;" onclick="openAdd(event)">+ إضافة</button>
     </div>
     <div class="barrel-grid" id="barrelGrid"></div>
   </div>
@@ -99,80 +99,67 @@
 
 <script>
 let materials = JSON.parse(localStorage.getItem('lab_materials')) || [];
-const waveData = {};
+const waveState = {};
 let targetTilt = 0;
-let currentTilt = 0;
-let shakeIntensity = 0;
+let shakePower = 0;
 
-// --- فيزياء الجيروسكوب المتطورة ---
-if (window.DeviceOrientationEvent) {
-    window.addEventListener('deviceorientation', (e) => {
-        // gamma هو ميل الهاتف يميناً ويساراً
-        // نقسم على 45 لتعطى زاوية انسيابية داخل الصندوق
-        targetTilt = (e.gamma || 0) / 45; 
-    });
+// --- طلب الوصول للحساسات (iOS & Android) ---
+function requestSensorAccess() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission().then(state => {
+            if (state === 'granted') toast("تم تفعيل الحساسات");
+        }).catch(console.error);
+    }
 }
+
+window.addEventListener('deviceorientation', (e) => {
+    // gamma يمثل الميل يميناً ويساراً، وهو الأنسب للصناديق
+    targetTilt = (e.gamma || 0) / 45; 
+});
 
 window.addEventListener('devicemotion', (e) => {
     let acc = e.acceleration;
     if (acc) {
         let force = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
-        if (force > 12) shakeIntensity = Math.min(force/20, 1.2);
+        if (force > 15) shakePower = Math.min(force/25, 1.5);
     }
 });
 
-function handleEnter(event, nextId) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        const nextElem = document.getElementById(nextId);
-        if (nextElem) {
-            nextElem.focus();
-            if (nextId === 'saveBtn') saveMaterial();
-        }
-    }
-}
-
-function createBarrel(canvas, color, fill) {
+// --- الرسم والتحريك ---
+function animateFluid(canvas, color, fill) {
     const id = canvas.dataset.matid;
     const ctx = canvas.getContext('2d');
-    const W = canvas.width = 180;
-    const H = canvas.height = 180;
-    const r = W/2;
+    const size = canvas.width = 180;
+    const r = size/2;
 
-    if (!waveData[id]) waveData[id] = { offset: 0, tilt: 0 };
-    const s = waveData[id];
+    if (!waveState[id]) waveState[id] = { offset: 0, tilt: 0 };
+    const s = waveState[id];
 
     function draw() {
-        ctx.clearRect(0,0,W,H);
-        
-        // رسم حدود الصندوق
-        ctx.beginPath(); ctx.arc(r,r,r-2,0,Math.PI*2);
-        ctx.strokeStyle = '#eee'; ctx.lineWidth = 2; ctx.stroke();
-
+        ctx.clearRect(0,0,size,size);
         ctx.save();
         ctx.beginPath(); ctx.arc(r,r,r-2,0,Math.PI*2); ctx.clip();
 
-        // تنعيم حركة الميل (Damping)
+        // تنعيم الميل والاهتزاز
         s.tilt += (targetTilt - s.tilt) * 0.1;
-        shakeIntensity *= 0.95;
+        shakePower *= 0.95;
 
-        let level = H * (1 - fill);
-        let amp = 4 + (shakeIntensity * 15);
-        s.offset += 0.06 + (shakeIntensity * 0.1);
+        let level = size * (1 - fill);
+        let waveAmp = 4 + (shakePower * 18);
+        s.offset += 0.05 + (shakePower * 0.15);
 
         ctx.beginPath();
         ctx.moveTo(0, level);
         
-        // رسم السائل مع التأثر بالجاذبية (Tilt)
-        for (let x = 0; x <= W; x += 5) {
-            // المعادلة تضمن أن السائل يميل دائماً عكس اتجاه ميل الهاتف ليبقى "أفقياً" مع الأرض
-            let y = level + Math.sin(x/25 + s.offset) * amp + (x - r) * s.tilt;
+        // معادلة الجاذبية: السائل يميل دائماً لأسفل الأرض
+        for (let x = 0; x <= size; x += 5) {
+            let y = level + Math.sin(x/20 + s.offset) * waveAmp + (x - r) * s.tilt;
             ctx.lineTo(x, y);
         }
         
-        ctx.lineTo(W, H); ctx.lineTo(0, H);
+        ctx.lineTo(size, size); ctx.lineTo(0, size);
         ctx.fillStyle = color;
-        ctx.globalAlpha = 0.9;
+        ctx.globalAlpha = 0.95;
         ctx.fill();
 
         ctx.restore();
@@ -193,35 +180,36 @@ function renderInventory() {
     `).join('');
     grid.querySelectorAll('canvas').forEach(c => {
         let m = materials.find(x => x.id == c.dataset.matid);
-        createBarrel(c, m.color, Math.min(1, m.qty/500));
+        animateFluid(c, m.color, Math.min(1, m.qty/500));
     });
 }
 
-function saveMaterial() {
-    const n = document.getElementById('matName');
-    const q = document.getElementById('matQty');
-    const p = document.getElementById('matPrice');
-    
-    if(!n.value || !q.value) return toast('أكمل البيانات');
-    
-    if(materials.some(m => m.name.toLowerCase() === n.value.trim().toLowerCase())) {
-        return toast('هذه المادة مسجلة مسبقاً');
+// --- الوظائف الأساسية ---
+function handleEnter(e, nextId) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const next = document.getElementById(nextId);
+        if (next) {
+            next.focus();
+            if (nextId === 'saveBtn') saveMaterial();
+        }
     }
+}
 
-    const colors = ['#4fc3f7', '#ff8a65', '#4db6ac', '#ba68c8', '#ffd54f'];
-    materials.push({
-        id: Date.now(), 
-        name: n.value.trim(), 
-        qty: parseFloat(q.value), 
-        price: parseFloat(p.value),
-        color: colors[materials.length % colors.length]
-    });
+function saveMaterial() {
+    const n = document.getElementById('matName'), q = document.getElementById('matQty'), p = document.getElementById('matPrice');
+    const name = n.value.trim();
+    const qty = parseFloat(q.value);
+    
+    if(!name || isNaN(qty)) return toast('أكمل البيانات');
+    if(materials.some(m => m.name.toLowerCase() === name.toLowerCase())) return toast('المادة موجودة مسبقاً');
+
+    const colors = ['#00d2ff', '#341f97', '#ee5253', '#05c46b', '#ffa801', '#ef5777'];
+    materials.push({ id: Date.now(), name, qty, price: parseFloat(p.value)||0, color: colors[materials.length % colors.length] });
 
     localStorage.setItem('lab_materials', JSON.stringify(materials));
     n.value = ''; q.value = ''; p.value = '';
-    closeAdd();
-    renderInventory();
-    toast('تم الحفظ');
+    closeAdd(); renderInventory(); toast('تم الحفظ بنجاح');
 }
 
 function deleteMat(id) {
@@ -242,7 +230,7 @@ function navTo(id) {
     if(id === 'inventory') renderInventory();
 }
 
-function openAdd() { document.getElementById('addOverlay').style.display = 'flex'; document.getElementById('matName').focus(); }
+function openAdd(e) { e.stopPropagation(); document.getElementById('addOverlay').style.display = 'flex'; document.getElementById('matName').focus(); }
 function closeAdd() { document.getElementById('addOverlay').style.display = 'none'; }
 function toast(m) {
     let t = document.createElement('div'); t.className = 'toast'; t.textContent = m;
