@@ -46,8 +46,10 @@
   /* ---- HAMBURGER MENU ---- */
   .menu-btn {
     background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text);
-    padding: 5px; display: flex; align-items: center;
+    padding: 5px; display: flex; align-items: center; transition: 0.2s;
   }
+
+  .menu-btn:hover { opacity: 0.7; }
 
   .side-menu {
     position: fixed; top: 0; right: -100%; width: 280px; height: 100%;
@@ -88,8 +90,8 @@
     align-items: center; text-align: center; box-shadow: var(--shadow);
   }
 
-  .barrel-wrap { width: 80px; height: 80px; margin-bottom: 10px; }
-  canvas { width: 80px; height: 80px; border-radius: 50%; }
+  .barrel-wrap { width: 80px; height: 80px; margin-bottom: 10px; position: relative; }
+  canvas { width: 80px; height: 80px; border-radius: 50%; display: block; }
 
   .btn {
     padding: 12px; border-radius: 12px; border: none; font-family: 'Tajawal';
@@ -116,11 +118,26 @@
   .ing-qty-input { width: 70px !important; margin: 0 !important; text-align: center; padding: 5px !important; }
 
   /* ---- TOASTS ---- */
-  .toasts { position: fixed; top: 70px; left: 20px; right: 20px; z-index: 3000; }
+  .toasts { position: fixed; top: 70px; right: 20px; z-index: 3000; }
   .toast { 
     background: #333; color: #fff; padding: 12px 20px; border-radius: 10px; 
-    margin-bottom: 8px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+    margin-bottom: 8px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease;
   }
+
+  @keyframes slideIn { from { transform: translateX(200px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  .sensor-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 5px;
+  }
+
+  .sensor-active { background: var(--success); color: white; }
+  .sensor-inactive { background: var(--warn); color: white; }
 </style>
 </head>
 <body>
@@ -128,7 +145,7 @@
 <header>
   <button class="menu-btn" onclick="toggleMenu()">☰</button>
   <div class="logo">Lab<span>App</span></div>
-  <button class="menu-btn" id="sensorBtn" onclick="requestSensorPermissions()" title="تفعيل الحساسات">📱</button>
+  <button class="menu-btn" id="sensorBtn" onclick="enableSensors()" title="تفعيل الحساسات">📱</button>
 </header>
 
 <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
@@ -144,6 +161,9 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
       <h2 style="font-size: 22px;">المخزون</h2>
       <button class="btn btn-primary" style="width: auto; padding: 8px 15px;" onclick="openAdd()">+ إضافة</button>
+    </div>
+    <div id="sensorStatus" style="text-align: center; margin-bottom: 15px;">
+      <span id="statusText" class="sensor-badge sensor-inactive">🔴 الحساسات معطلة</span>
     </div>
     <div class="barrel-grid" id="barrelGrid"></div>
   </div>
@@ -185,436 +205,426 @@
 <script>
 let materials = JSON.parse(localStorage.getItem('lab_materials')) || [];
 let products = JSON.parse(localStorage.getItem('lab_products')) || [];
-const waveData = {};
 
-// ===== PHYSICS PARAMETERS =====
-const PHYSICS = {
-  gravity: { x: 0, y: 9.81 },          // الجاذبية الأرضية
-  shake: 0,                             // قوة الهز الحالية
-  waveAmplitude: 1,                     // سعة الموجة الأساسية
-  damping: 0.92,                        // تخفيف الاهتزازات (friction)
-  tiltSensitivity: 0.8,                 // حساسية الميل
-  shakeSensitivity: 25,                 // عتبة الهز
-  maxShakeIntensity: 2.0                // أقصى قوة هز
+// ===== PHYSICS ENGINE FOR LIQUID =====
+const LIQUID_PHYSICS = {
+  gravity: { x: 0, y: 9.81 },
+  shake: 0,
+  shakeHistory: [],
+  
+  update() {
+    // تقليل الهز تدريجياً
+    this.shake *= 0.94;
+    
+    // متوسط الهز في آخر 5 قراءات
+    if (this.shakeHistory.length > 5) this.shakeHistory.shift();
+  }
 };
 
-// ===== SENSORS DATA =====
 const SENSORS = {
   accelX: 0,
   accelY: 0,
   accelZ: 0,
-  gyroX: 0,
-  gyroY: 0,
-  gyroZ: 0,
-  alpha: 0,   // Rotation around Z axis (yaw)
-  beta: 0,    // Rotation around X axis (pitch) - الميل للأمام والخلف
-  gamma: 0    // Rotation around Y axis (roll) - الميل جانباً
+  beta: 0,   // الميل للأمام والخلف
+  gamma: 0,  // الميل جانباً
+  enabled: false
 };
 
 // ===== طلب الوصول للحساسات =====
-let sensorsEnabled = false;
-
-function requestSensorPermissions() {
-  // iOS 13+ و Android Q+ تحتاج permission صريح
-  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+async function enableSensors() {
+  const btn = document.getElementById('sensorBtn');
+  const statusText = document.getElementById('statusText');
+  
+  try {
     // iOS 13+
-    Promise.all([
-      DeviceOrientationEvent.requestPermission(),
-      DeviceMotionEvent.requestPermission()
-    ])
-    .then(permissions => {
-      if (permissions[0] === 'granted' && permissions[1] === 'granted') {
-        sensorsEnabled = true;
-        enableSensors();
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      const permOrientation = await DeviceOrientationEvent.requestPermission();
+      const permMotion = await DeviceMotionEvent.requestPermission();
+      
+      if (permOrientation === 'granted' && permMotion === 'granted') {
+        SENSORS.enabled = true;
+        setupSensorListeners();
+        btn.textContent = '📱✅';
+        btn.style.color = 'var(--success)';
+        statusText.textContent = '🟢 الحساسات مفعلة';
+        statusText.className = 'sensor-badge sensor-active';
         toast('✅ تم تفعيل الحساسات بنجاح');
-      } else {
-        toast('❌ تم رفض الوصول للحساسات');
+        return;
       }
-    })
-    .catch(err => {
-      console.error('Permission error:', err);
-      enableSensorsFallback();
-    });
-  } else {
-    // Android و متصفحات أخرى
-    sensorsEnabled = true;
-    enableSensors();
-    toast('✅ الحساسات مفعلة');
+    } else {
+      // Android و متصفحات أخرى
+      SENSORS.enabled = true;
+      setupSensorListeners();
+      btn.textContent = '📱✅';
+      btn.style.color = 'var(--success)';
+      statusText.textContent = '🟢 الحساسات مفعلة';
+      statusText.className = 'sensor-badge sensor-active';
+      toast('✅ الحساسات مفعلة');
+      return;
+    }
+    
+    throw new Error('تم رفض الوصول');
+  } catch (err) {
+    toast('❌ فشل تفعيل الحساسات: ' + err.message);
+    statusText.textContent = '🔴 الحساسات معطلة';
+    statusText.className = 'sensor-badge sensor-inactive';
   }
 }
 
-function enableSensors() {
-  // تحديث بيانات الجاذبية
+function setupSensorListeners() {
+  // تحديث الميل (Orientation)
   window.addEventListener('deviceorientation', (e) => {
-    SENSORS.alpha = (e.alpha || 0);
-    SENSORS.beta = (e.beta || 0);
-    SENSORS.gamma = (e.gamma || 0);
+    if (!SENSORS.enabled) return;
     
-    // تحويل الزوايا إلى قوة جاذبية
-    PHYSICS.gravity.x = Math.sin((SENSORS.gamma * Math.PI) / 180) * 15;
-    PHYSICS.gravity.y = 9.81 - Math.sin((SENSORS.beta * Math.PI) / 180) * 8;
+    SENSORS.beta = (e.beta || 0);   // -180 إلى 180
+    SENSORS.gamma = (e.gamma || 0); // -90 إلى 90
+    
+    // تحويل الزوايا إلى قوة جاذبية واقعية
+    LIQUID_PHYSICS.gravity.x = Math.sin((SENSORS.gamma * Math.PI) / 180) * 12;
+    LIQUID_PHYSICS.gravity.y = 9.81 + Math.sin((SENSORS.beta * Math.PI) / 180) * 3;
   }, false);
 
-  // تحديث بيانات الحركة والهز
+  // تحديث الحركة والهز (Motion)
   window.addEventListener('devicemotion', (e) => {
+    if (!SENSORS.enabled) return;
     if (!e.acceleration) return;
     
     SENSORS.accelX = e.acceleration.x || 0;
     SENSORS.accelY = e.acceleration.y || 0;
     SENSORS.accelZ = e.acceleration.z || 0;
     
-    let accelMagnitude = Math.sqrt(
-      SENSORS.accelX ** 2 + 
-      SENSORS.accelY ** 2 + 
-      SENSORS.accelZ ** 2
+    // حساب قوة الهز الحالية
+    let magnitude = Math.sqrt(
+      Math.pow(SENSORS.accelX, 2) + 
+      Math.pow(SENSORS.accelY, 2) + 
+      Math.pow(SENSORS.accelZ, 2)
     );
     
-    if (accelMagnitude > PHYSICS.shakeSensitivity) {
-      PHYSICS.shake = Math.min(
-        accelMagnitude / PHYSICS.shakeSensitivity,
-        PHYSICS.maxShakeIntensity
-      );
+    // تطبيق حساسية ديناميكية
+    if (magnitude > 12) {
+      LIQUID_PHYSICS.shake = Math.min(magnitude / 15, 2.5);
+      LIQUID_PHYSICS.shakeHistory.push(magnitude);
     } else {
-      PHYSICS.shake *= PHYSICS.damping;
+      LIQUID_PHYSICS.shake *= 0.93;
     }
   }, false);
-  
-  // تحديث الزر البصري
-  document.getElementById('sensorBtn').style.color = 'var(--success)';
-  document.getElementById('sensorBtn').textContent = '📱✅';
-}
-
-function enableSensorsFallback() {
-  // في حالة المتصفحات القديمة بدون permission
-  try {
-    window.addEventListener('deviceorientation', (e) => {
-      SENSORS.gamma = (e.gamma || 0);
-      SENSORS.beta = (e.beta || 0);
-      PHYSICS.gravity.x = Math.sin((SENSORS.gamma * Math.PI) / 180) * 15;
-      PHYSICS.gravity.y = 9.81 - Math.sin((SENSORS.beta * Math.PI) / 180) * 8;
-    }, false);
-
-    window.addEventListener('devicemotion', (e) => {
-      if (!e.acceleration) return;
-      SENSORS.accelX = e.acceleration.x || 0;
-      SENSORS.accelY = e.acceleration.y || 0;
-      SENSORS.accelZ = e.acceleration.z || 0;
-      
-      let accelMagnitude = Math.sqrt(
-        SENSORS.accelX ** 2 + SENSORS.accelY ** 2 + SENSORS.accelZ ** 2
-      );
-      
-      if (accelMagnitude > PHYSICS.shakeSensitivity) {
-        PHYSICS.shake = Math.min(
-          accelMagnitude / PHYSICS.shakeSensitivity,
-          PHYSICS.maxShakeIntensity
-        );
-      } else {
-        PHYSICS.shake *= PHYSICS.damping;
-      }
-    }, false);
-    
-    sensorsEnabled = true;
-  } catch(e) {
-    toast('⚠️ الحساسات غير متاحة على هذا الجهاز');
-  }
 }
 
 // --- NAVIGATION & MENU ---
 function toggleMenu() {
-    document.getElementById('sideMenu').classList.toggle('open');
-    document.getElementById('menuOverlay').classList.toggle('show');
+  document.getElementById('sideMenu').classList.toggle('open');
+  document.getElementById('menuOverlay').classList.toggle('show');
 }
 
 function navTo(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
-    document.getElementById('page-' + pageId).classList.add('active');
-    document.querySelector(`[data-nav="${pageId}"]`).classList.add('active');
-    toggleMenu();
-    if(pageId === 'inventory') renderInventory();
-    if(pageId === 'lab') renderLab();
-    if(pageId === 'products') renderProducts();
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  document.querySelector(`[data-nav="${pageId}"]`).classList.add('active');
+  toggleMenu();
+  if(pageId === 'inventory') renderInventory();
+  if(pageId === 'lab') renderLab();
+  if(pageId === 'products') renderProducts();
 }
 
 // التنقل بزر Enter
 function handleEnter(event, nextId) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        const nextElem = document.getElementById(nextId);
-        if (nextElem) {
-            nextElem.focus();
-            if (nextId === 'saveBtn') saveMaterial();
-        }
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const nextElem = document.getElementById(nextId);
+    if (nextElem) {
+      nextElem.focus();
+      if (nextId === 'saveBtn') saveMaterial();
     }
+  }
 }
 
-// ===== رسم السائل مع فيزياء حقيقية =====
+// ===== ADVANCED LIQUID RENDERING =====
 function createBarrel(canvas, color, fill) {
-    const id = canvas.dataset.matid;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width = 160;
-    const H = canvas.height = 160;
-    const r = W / 2;
+  const id = canvas.dataset.matid;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = 160;
+  const H = canvas.height = 160;
+  const centerX = W / 2;
+  const centerY = H / 2;
+  const radius = W / 2 - 2;
+
+  // حالة السائل لكل برميل
+  if (!canvas.liquidState) {
+    canvas.liquidState = {
+      waveOffset: Math.random() * Math.PI * 2,
+      particles: [],
+      velocity: 0
+    };
     
-    if (!waveData[id]) {
-      waveData[id] = {
-        offset: Math.random() * Math.PI * 2,  // عشوائي للتنوع
-        particles: [],                        // جزيئات السائل
-        surfacePoints: Array(W).fill(H * (1 - fill))  // نقاط السطح
-      };
+    // إنشاء جزيئات عشوائية
+    for (let i = 0; i < 6; i++) {
+      canvas.liquidState.particles.push({
+        x: Math.random() * W,
+        y: H * (1 - fill) + (Math.random() - 0.5) * 25,
+        vx: 0,
+        vy: 0
+      });
     }
+  }
+
+  const state = canvas.liquidState;
+  let frameCount = 0;
+
+  function animate() {
+    frameCount++;
+    ctx.clearRect(0, 0, W, H);
     
-    const state = waveData[id];
+    // حفظ السياق
+    ctx.save();
     
-    // تهيئة الجزيئات إذا لم تكن موجودة
-    if (state.particles.length === 0) {
-      for (let i = 0; i < 8; i++) {
-        state.particles.push({
-          x: Math.random() * W,
-          y: H * (1 - fill) + (Math.random() - 0.5) * 20,
-          vx: (Math.random() - 0.5) * 2,
-          vy: (Math.random() - 0.5) * 2
-        });
+    // إنشاء مسار دائري للقص
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.clip();
+
+    // خلفية الحاوية
+    ctx.fillStyle = color + '15';
+    ctx.fillRect(0, 0, W, H);
+
+    // ===== محاكاة فيزياء السائل =====
+    
+    // تحديث الجزيئات بناءً على الجاذبية والهز
+    state.particles.forEach(p => {
+      // تطبيق الجاذبية
+      p.vy += LIQUID_PHYSICS.gravity.y * 0.008;
+      p.vx += LIQUID_PHYSICS.gravity.x * 0.008;
+      
+      // تطبيق قوى الهز العشوائية
+      if (LIQUID_PHYSICS.shake > 0.3) {
+        let shakeForce = LIQUID_PHYSICS.shake;
+        p.vx += (Math.random() - 0.5) * shakeForce * 0.3;
+        p.vy += (Math.random() - 0.5) * shakeForce * 0.3;
       }
+      
+      // احتكاك ديناميكي
+      p.vx *= 0.96;
+      p.vy *= 0.96;
+      
+      // تحديث الموضع
+      p.x += p.vx;
+      p.y += p.vy;
+      
+      // منع الخروج من الحدود مع ارتداد واقعي
+      const bounce = 0.5;
+      if (p.x < 5) { p.x = 5; p.vx *= -bounce; }
+      if (p.x > W - 5) { p.x = W - 5; p.vx *= -bounce; }
+      if (p.y < H * (1 - fill) - 35) { p.y = H * (1 - fill) - 35; p.vy *= -0.4; }
+      if (p.y > H - 5) { p.y = H - 5; p.vy *= -bounce; }
+    });
+
+    // ===== رسم سطح السائل =====
+    
+    // قاعدة مستوى السائل
+    let baseLevel = H * (1 - fill);
+    
+    // سعة الموجات (تزيد مع الهز)
+    let waveAmplitude = (H * 0.08) * (1 + LIQUID_PHYSICS.shake * 0.4);
+    let waveFrequency = 3.5 + LIQUID_PHYSICS.shake * 0.5;
+    
+    // رسم الموجات
+    ctx.beginPath();
+    ctx.moveTo(0, baseLevel + 10);
+
+    for (let x = 0; x <= W; x += 2) {
+      // موجة أساسية
+      let wave1 = Math.sin((x / W) * Math.PI * waveFrequency + state.waveOffset) * waveAmplitude;
+      
+      // موجة ثانية للتعقيد
+      let wave2 = Math.sin((x / W) * Math.PI * (waveFrequency * 0.6) + state.waveOffset * 0.5) * (waveAmplitude * 0.4);
+      
+      // الميل من الجاذبية
+      let tilt = (x - centerX) * (LIQUID_PHYSICS.gravity.x / 150);
+      
+      // تأثير الجزيئات على السطح
+      let particleInfluence = 0;
+      state.particles.forEach(p => {
+        let dist = Math.abs(p.x - x);
+        if (dist < 20) {
+          particleInfluence += (20 - dist) * p.vy * 0.04;
+        }
+      });
+      
+      // النقطة النهائية للسطح
+      let y = baseLevel + wave1 + wave2 + tilt + particleInfluence;
+      ctx.lineTo(x, y);
     }
 
-    function draw() {
-        ctx.clearRect(0, 0, W, H);
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(r, r, r - 2, 0, Math.PI * 2);
-        ctx.clip();
-        
-        // خلفية الصندوق
-        ctx.fillStyle = color + '22';
-        ctx.fillRect(0, 0, W, H);
-        
-        // ===== محاكاة فيزياء السائل =====
-        
-        // 1. تطبيق الجاذبية على الجزيئات
-        state.particles.forEach(p => {
-          p.vy += PHYSICS.gravity.y * 0.01;  // جاذبية Y
-          p.vx += PHYSICS.gravity.x * 0.005;  // جاذبية X (من الميل)
-          
-          // إضافة قوى عشوائية من الهز
-          if (PHYSICS.shake > 0.5) {
-            p.vx += (Math.random() - 0.5) * PHYSICS.shake * 0.5;
-            p.vy += (Math.random() - 0.5) * PHYSICS.shake * 0.5;
-          }
-          
-          // تقليل السرعة (احتكاك)
-          p.vx *= 0.98;
-          p.vy *= 0.98;
-          
-          // تحديث الموضع
-          p.x += p.vx;
-          p.y += p.vy;
-          
-          // منع الجزيئات من الخروج من الحدود
-          const MARGIN = 5;
-          if (p.x < MARGIN) p.x = MARGIN, p.vx *= -0.6;
-          if (p.x > W - MARGIN) p.x = W - MARGIN, p.vx *= -0.6;
-          if (p.y < H * (1 - fill) - 30) p.y = H * (1 - fill) - 30, p.vy *= -0.5;
-          if (p.y > H - MARGIN) p.y = H - MARGIN, p.vy *= -0.6;
-        });
-        
-        // 2. رسم الموجات على السطح
-        const waveFreq = 4 + PHYSICS.shake;  // التكرار يزيد مع الهز
-        let liquidTop = H * (1 - fill);
-        let baseAmplitude = (H * 0.06) * (1 + PHYSICS.shake * 0.3);  // السعة تزيد مع الهز
-        
-        ctx.beginPath();
-        ctx.moveTo(0, liquidTop);
-        
-        for (let x = 0; x <= W; x += 3) {
-          // موجة أساسية
-          let wave1 = Math.sin((x / W) * Math.PI * waveFreq + state.offset) * baseAmplitude;
-          
-          // موجة ثانية للتأثير الواقعي
-          let wave2 = Math.sin((x / W) * Math.PI * (waveFreq + 1.5) + state.offset * 0.7) * (baseAmplitude * 0.5);
-          
-          // الميل من الجاذبية
-          let tilt = (x - r) * (PHYSICS.gravity.x / 200);
-          
-          // نقطة السطح النهائية
-          let y = liquidTop + wave1 + wave2 + tilt;
-          
-          // إضافة تأثير الجزيئات على السطح (ناعمة)
-          for (let p of state.particles) {
-            let dist = Math.abs(p.x - x);
-            if (dist < 15) {
-              y += (15 - dist) * (p.vy * 0.05);
-            }
-          }
-          
-          ctx.lineTo(x, y);
-        }
-        
-        ctx.lineTo(W, H);
-        ctx.lineTo(0, H);
-        ctx.closePath();
-        
-        // تدرج لوني للسائل
-        let gradient = ctx.createLinearGradient(0, liquidTop, 0, H);
-        gradient.addColorStop(0, color + 'cc');     // أعلى: لون قوي
-        gradient.addColorStop(1, color + '88');     // أسفل: أفتح قليلاً
-        
-        ctx.fillStyle = gradient;
-        ctx.fill();
-        
-        // خط الحافة (highlight)
-        ctx.strokeStyle = color + 'ff';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        
-        ctx.restore();
-        
-        // تحديث offset الموجة
-        state.offset += 0.04 + (PHYSICS.shake * 0.08);
-        
-        requestAnimationFrame(draw);
-    }
+    // إغلاق المسار
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+
+    // ملء بتدرج لوني للسائل
+    let gradient = ctx.createLinearGradient(0, baseLevel, 0, H);
+    gradient.addColorStop(0, color + 'e0');      // أعلى: لون قوي
+    gradient.addColorStop(0.7, color + 'a0');   // وسط
+    gradient.addColorStop(1, color + '50');     // أسفل: أفتح
+
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    // حافة لامعة
+    ctx.strokeStyle = color + 'ff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.restore();
+
+    // تحديث الموجة
+    state.waveOffset += 0.035 + (LIQUID_PHYSICS.shake * 0.08);
     
-    draw();
+    // تحديث الفيزياء
+    LIQUID_PHYSICS.update();
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
 }
 
 function renderInventory() {
-    const grid = document.getElementById('barrelGrid');
-    grid.innerHTML = materials.map(m => `
-        <div class="barrel-card">
-            <div class="barrel-wrap"><canvas data-matid="${m.id}"></canvas></div>
-            <div style="font-weight:800; font-size:14px">${m.name}</div>
-            <div style="font-size:12px; color:var(--text2)">${m.qty}g</div>
-            <button class="btn btn-danger" onclick="deleteMat(${m.id})">حذف</button>
-        </div>
-    `).join('');
-    grid.querySelectorAll('canvas').forEach(c => {
-        let m = materials.find(x => x.id == c.dataset.matid);
-        createBarrel(c, m.color, Math.min(1, m.qty / 500));
-    });
+  const grid = document.getElementById('barrelGrid');
+  grid.innerHTML = materials.map(m => `
+    <div class="barrel-card">
+      <div class="barrel-wrap"><canvas data-matid="${m.id}"></canvas></div>
+      <div style="font-weight:800; font-size:14px">${m.name}</div>
+      <div style="font-size:12px; color:var(--text2)">${m.qty}g</div>
+      <button class="btn btn-danger" onclick="deleteMat(${m.id})">حذف</button>
+    </div>
+  `).join('');
+  
+  grid.querySelectorAll('canvas').forEach(c => {
+    let m = materials.find(x => x.id == c.dataset.matid);
+    createBarrel(c, m.color, Math.min(1, m.qty / 500));
+  });
 }
 
-function openAdd() { 
-    document.getElementById('addOverlay').style.display = 'flex'; 
-    document.getElementById('matName').focus();
+function openAdd() {
+  document.getElementById('addOverlay').style.display = 'flex';
+  document.getElementById('matName').focus();
 }
 
-function closeAdd() { 
-    document.getElementById('addOverlay').style.display = 'none'; 
+function closeAdd() {
+  document.getElementById('addOverlay').style.display = 'none';
 }
 
 function saveMaterial() {
-    let nameInput = document.getElementById('matName');
-    let qtyInput = document.getElementById('matQty');
-    let priceInput = document.getElementById('matPrice');
+  let nameInput = document.getElementById('matName');
+  let qtyInput = document.getElementById('matQty');
+  let priceInput = document.getElementById('matPrice');
 
-    let name = nameInput.value.trim();
-    let qty = parseFloat(qtyInput.value);
-    let price = parseFloat(priceInput.value);
+  let name = nameInput.value.trim();
+  let qty = parseFloat(qtyInput.value);
+  let price = parseFloat(priceInput.value);
 
-    if(!name || isNaN(qty)) return toast('أكمل البيانات');
+  if(!name || isNaN(qty)) return toast('❌ أكمل البيانات');
 
-    if (materials.some(m => m.name.toLowerCase() === name.toLowerCase())) {
-        return toast('هذه المادة موجودة بالفعل');
-    }
+  if (materials.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+    return toast('❌ هذه المادة موجودة بالفعل');
+  }
 
-    const brightColors = ['#4fc3f7', '#ff8a65', '#4db6ac', '#ba68c8', '#ffd54f'];
-    let color = brightColors[materials.length % brightColors.length];
+  const brightColors = ['#4fc3f7', '#ff8a65', '#4db6ac', '#ba68c8', '#ffd54f', '#81c784'];
+  let color = brightColors[materials.length % brightColors.length];
 
-    materials.push({ id: Date.now(), name, qty, price, color });
-    localStorage.setItem('lab_materials', JSON.stringify(materials));
-    
-    nameInput.value = '';
-    qtyInput.value = '';
-    priceInput.value = '';
-    
-    closeAdd();
-    renderInventory();
-    toast('تمت الإضافة بنجاح');
+  materials.push({ id: Date.now(), name, qty, price, color });
+  localStorage.setItem('lab_materials', JSON.stringify(materials));
+
+  nameInput.value = '';
+  qtyInput.value = '';
+  priceInput.value = '';
+
+  closeAdd();
+  renderInventory();
+  toast('✅ تمت الإضافة بنجاح');
 }
 
 function deleteMat(id) {
-    materials = materials.filter(m => m.id !== id);
-    localStorage.setItem('lab_materials', JSON.stringify(materials));
-    renderInventory();
+  materials = materials.filter(m => m.id !== id);
+  localStorage.setItem('lab_materials', JSON.stringify(materials));
+  renderInventory();
 }
 
 function renderLab() {
-    const list = document.getElementById('ingList');
-    list.innerHTML = materials.map(m => `
-        <div class="ing-item">
-            <div>
-                <div style="font-weight:700">${m.name}</div>
-                <div style="font-size:11px; color:var(--text2)">متاح: ${m.qty}g</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px">
-                <input type="number" class="ing-qty-input" placeholder="0" data-id="${m.id}" oninput="calcTotal()">
-                <span style="font-size:12px">ج</span>
-            </div>
-        </div>
-    `).join('');
+  const list = document.getElementById('ingList');
+  list.innerHTML = materials.map(m => `
+    <div class="ing-item">
+      <div>
+        <div style="font-weight:700">${m.name}</div>
+        <div style="font-size:11px; color:var(--text2)">متاح: ${m.qty}g</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px">
+        <input type="number" class="ing-qty-input" placeholder="0" data-id="${m.id}" oninput="calcTotal()">
+        <span style="font-size:12px">ج</span>
+      </div>
+    </div>
+  `).join('');
 }
 
 function calcTotal() {
-    let total = 0;
-    document.querySelectorAll('.ing-qty-input').forEach(input => {
-        let g = parseFloat(input.value) || 0;
-        let m = materials.find(x => x.id == input.dataset.id);
-        total += g * m.price;
-    });
-    document.getElementById('totalPrice').textContent = total.toFixed(2) + ' ج';
+  let total = 0;
+  document.querySelectorAll('.ing-qty-input').forEach(input => {
+    let g = parseFloat(input.value) || 0;
+    let m = materials.find(x => x.id == input.dataset.id);
+    total += g * m.price;
+  });
+  document.getElementById('totalPrice').textContent = total.toFixed(2) + ' ج';
 }
 
 function buildProduct() {
-    let name = document.getElementById('prodName').value;
-    if(!name) return toast('أدخل اسم المنتج');
-    
-    let total = 0;
-    document.querySelectorAll('.ing-qty-input').forEach(input => {
-        let g = parseFloat(input.value) || 0;
-        if(g > 0) {
-            let m = materials.find(x => x.id == input.dataset.id);
-            m.qty -= g;
-            total += g * m.price;
-        }
-    });
+  let name = document.getElementById('prodName').value;
+  if(!name) return toast('❌ أدخل اسم المنتج');
 
-    products.push({ name, total, date: new Date().toLocaleDateString('ar-EG') });
-    localStorage.setItem('lab_materials', JSON.stringify(materials));
-    localStorage.setItem('lab_products', JSON.stringify(products));
-    toast('تم حفظ المنتج وتحديث المخزون');
-    navTo('products');
+  let total = 0;
+  document.querySelectorAll('.ing-qty-input').forEach(input => {
+    let g = parseFloat(input.value) || 0;
+    if(g > 0) {
+      let m = materials.find(x => x.id == input.dataset.id);
+      m.qty -= g;
+      total += g * m.price;
+    }
+  });
+
+  products.push({ name, total, date: new Date().toLocaleDateString('ar-EG') });
+  localStorage.setItem('lab_materials', JSON.stringify(materials));
+  localStorage.setItem('lab_products', JSON.stringify(products));
+  toast('✅ تم حفظ المنتج وتحديث المخزون');
+  navTo('products');
 }
 
 function renderProducts() {
-    const grid = document.getElementById('productsGrid');
-    grid.innerHTML = products.map(p => `
-        <div class="barrel-card" style="text-align:right; align-items:flex-start; padding:20px">
-            <div style="font-weight:800; font-size:16px; margin-bottom:5px">${p.name}</div>
-            <div style="color:var(--success); font-weight:700">${p.total.toFixed(2)} ج</div>
-            <div style="font-size:11px; color:var(--text2); margin-top:10px">${p.date}</div>
-        </div>
-    `).join('');
+  const grid = document.getElementById('productsGrid');
+  grid.innerHTML = products.map(p => `
+    <div class="barrel-card" style="text-align:right; align-items:flex-start; padding:20px">
+      <div style="font-weight:800; font-size:16px; margin-bottom:5px">${p.name}</div>
+      <div style="color:var(--success); font-weight:700">${p.total.toFixed(2)} ج</div>
+      <div style="font-size:11px; color:var(--text2); margin-top:10px">${p.date}</div>
+    </div>
+  `).join('');
 }
 
 function toast(m) {
-    let t = document.createElement('div');
-    t.className = 'toast';
-    t.textContent = m;
-    document.getElementById('toasts').appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+  let t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = m;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
 }
 
-// تفعيل الحساسات تلقائياً عند التحميل
-window.addEventListener('DOMContentLoaded', () => {
-  // محاولة تفعيل الحساسات تلقائياً
-  setTimeout(() => {
-    requestSensorPermissions();
-  }, 500);
-});
-
+// تهيئة التطبيق
 renderInventory();
+
+// محاولة تفعيل الحساسات تلقائياً عند التحميل
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    enableSensors();
+  }, 1000);
+});
 </script>
 </body>
 </html>
