@@ -7,100 +7,143 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:#ffffff; --bg2:#f8f9fa; --bg3:#f1f3f5; --card:#ffffff;
-    --border:rgba(0,0,0,0.08); --accent:#70cefa; --text:#2d3436;
-    --text2:#636e72; --success:#06d6a0; --warn:#ffb703;
-    --shadow:0 4px 12px rgba(0,0,0,0.05);
+    --bg: #ffffff;
+    --bg2: #f8f9fa;
+    --bg3: #f1f3f5;
+    --card: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --accent: #5fccfe;
+    --text: #2d3436;
+    --text2: #636e72;
+    --success: #06d6a0;
+    --warn: #ffb703;
+    --shadow: 0 4px 12px rgba(0,0,0,0.05);
   }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
 
-  header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 20px;height:60px;
-    display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1000}
-  .logo{font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px}
-  .logo span{color:var(--accent)}
-  .menu-btn{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text);padding:5px;display:flex;align-items:center}
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  .side-menu{position:fixed;top:0;right:-100%;width:280px;height:100%;background:var(--bg);z-index:2000;
-    transition:0.3s;box-shadow:-5px 0 20px rgba(0,0,0,0.1);padding:20px;display:flex;flex-direction:column;gap:15px}
-  .side-menu.open{right:0}
-  .menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;z-index:1500;backdrop-filter:blur(2px)}
-  .menu-overlay.show{display:block}
-  .menu-link{padding:15px;border-radius:12px;border:none;background:var(--bg2);color:var(--text);
-    font-family:'Tajawal';font-size:16px;font-weight:600;text-align:right;cursor:pointer;transition:0.2s}
-  .menu-link.active{background:var(--accent);color:#fff}
-
-  main{padding:20px;max-width:100%}
-  .page{display:none;animation:fadeIn 0.3s ease}
-  .page.active{display:block}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-
-  .barrel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-  .barrel-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:15px 10px;
-    display:flex;flex-direction:column;align-items:center;text-align:center;box-shadow:var(--shadow)}
-  .barrel-wrap{width:80px;height:80px;margin-bottom:10px}
-  .barrel-wrap canvas{width:80px;height:80px;border-radius:50%;display:block}
-
-  .btn{padding:12px;border-radius:12px;border:none;font-family:'Tajawal';font-weight:700;cursor:pointer;
-    transition:0.2s;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
-  .btn-primary{background:var(--accent);color:#fff}
-  .btn-success{background:var(--success);color:#fff}
-  .btn-danger{background:#fff;color:var(--accent);border:1px solid var(--accent);font-size:12px;padding:6px}
-
-  input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);margin-bottom:12px;
-    font-family:'Tajawal';font-size:14px;outline:none}
-  input:focus{border-color:var(--accent)}
-
-  .ing-item{background:var(--bg2);padding:12px;border-radius:15px;display:flex;align-items:center;
-    justify-content:space-between;margin-bottom:10px}
-  .ing-qty-input{width:70px!important;margin:0!important;text-align:center;padding:5px!important}
-
-  .toasts{position:fixed;top:70px;left:20px;right:20px;z-index:3000}
-  .toast{background:#333;color:#fff;padding:12px 20px;border-radius:10px;margin-bottom:8px;
-    font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
-
-  /* ONE-TIME PERMISSION MODAL */
-  #permModal{
-    position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9000;
-    display:flex;align-items:center;justify-content:center;padding:30px;
-    backdrop-filter:blur(6px);
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
   }
-  #permModal.hidden{display:none}
-  #permBox{
-    background:#fff;border-radius:24px;padding:32px 24px;text-align:center;
-    max-width:320px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,0.3);
+
+  /* ---- HEADER ---- */
+  header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 1000;
   }
-  #permBox .icon{font-size:52px;margin-bottom:14px}
-  #permBox h3{font-size:20px;font-weight:800;margin-bottom:8px;color:var(--text)}
-  #permBox p{font-size:14px;color:var(--text2);margin-bottom:24px;line-height:1.75}
-  #permBox button{
-    width:100%;padding:14px;border-radius:14px;border:none;
-    background:var(--accent);color:#fff;font-family:'Tajawal';
-    font-size:16px;font-weight:700;cursor:pointer;
+
+  .logo { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .logo span { color: var(--accent); }
+
+  /* ---- HAMBURGER MENU ---- */
+  .menu-btn {
+    background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text);
+    padding: 5px; display: flex; align-items: center;
+  }
+
+  .side-menu {
+    position: fixed; top: 0; right: -100%; width: 280px; height: 100%;
+    background: var(--bg); z-index: 2000; transition: 0.3s;
+    box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+    padding: 20px; display: flex; flex-direction: column; gap: 15px;
+  }
+  .side-menu.open { right: 0; }
+
+  .menu-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: none; z-index: 1500; backdrop-filter: blur(2px);
+  }
+  .menu-overlay.show { display: block; }
+
+  .menu-link {
+    padding: 15px; border-radius: 12px; border: none; background: var(--bg2);
+    color: var(--text); font-family: 'Tajawal'; font-size: 16px; font-weight: 600;
+    text-align: right; cursor: pointer; transition: 0.2s;
+  }
+  .menu-link.active { background: var(--accent); color: #fff; }
+
+  /* ---- MAIN CONTENT ---- */
+  main { padding: 20px; max-width: 100%; }
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---- UI COMPONENTS ---- */
+  .barrel-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+  }
+
+  .barrel-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 15px 10px; display: flex; flex-direction: column;
+    align-items: center; text-align: center; box-shadow: var(--shadow);
+  }
+
+  .barrel-wrap { width: 80px; height: 80px; margin-bottom: 10px; position: relative; }
+  .barrel-wrap canvas { width: 80px; height: 80px; border-radius: 50%; display: block; }
+
+  .btn {
+    padding: 12px; border-radius: 12px; border: none; font-family: 'Tajawal';
+    font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: #fff; color: var(--accent); border: 1px solid var(--accent); font-size: 12px; padding: 6px; }
+
+  /* ---- FORMS ---- */
+  input {
+    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+    margin-bottom: 12px; font-family: 'Tajawal'; font-size: 14px;
+    outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+
+  /* ---- LAB PAGE ---- */
+  .ing-item {
+    background: var(--bg2); padding: 12px; border-radius: 15px;
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+  }
+  .ing-qty-input { width: 70px !important; margin: 0 !important; text-align: center; padding: 5px !important; }
+
+  /* ---- TOASTS ---- */
+  .toasts { position: fixed; top: 70px; left: 20px; right: 20px; z-index: 3000; }
+  .toast {
+    background: #333; color: #fff; padding: 12px 20px; border-radius: 10px;
+    margin-bottom: 8px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  /* ---- SENSOR PERMISSION BUTTON ---- */
+  #sensorBtn {
+    display: none;
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #fff; border: none;
+    padding: 12px 24px; border-radius: 30px; font-family: 'Tajawal';
+    font-size: 15px; font-weight: 700; cursor: pointer; z-index: 500;
+    box-shadow: 0 4px 16px rgba(112,206,250,0.5);
   }
 </style>
 </head>
 <body>
 
-<!-- ONE-TIME iOS PERMISSION MODAL -->
-<div id="permModal" class="hidden">
-  <div id="permBox">
-    <div class="icon">📱</div>
-    <h3>تفعيل حساسات الحركة</h3>
-    <p>عشان السائل يتحرك مع الموبايل في كل الاتجاهات، محتاج إذن الوصول للحساسات — مرة واحدة بس.</p>
-    <button onclick="grantIOSPermission()">السماح</button>
-  </div>
-</div>
-
 <header>
   <button class="menu-btn" onclick="toggleMenu()">☰</button>
   <div class="logo">Lab<span>App</span></div>
-  <div style="width:34px"></div>
+  <div style="width: 34px;"></div>
 </header>
 
 <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
 <div class="side-menu" id="sideMenu">
-  <div style="font-weight:800;font-size:20px;margin-bottom:20px">القائمة</div>
+  <div style="font-weight: 800; font-size: 20px; margin-bottom: 20px;">القائمة</div>
   <button class="menu-link active" data-nav="inventory" onclick="navTo('inventory')">المخزون</button>
   <button class="menu-link" data-nav="lab" onclick="navTo('lab')">المعمل</button>
   <button class="menu-link" data-nav="products" onclick="navTo('products')">المنتجات</button>
@@ -108,220 +151,308 @@
 
 <main>
   <div class="page active" id="page-inventory">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h2 style="font-size:22px">المخزون</h2>
-      <button class="btn btn-primary" style="width:auto;padding:8px 15px" onclick="openAdd()">+ إضافة</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2 style="font-size: 22px;">المخزون</h2>
+      <button class="btn btn-primary" style="width: auto; padding: 8px 15px;" onclick="openAdd()">+ إضافة</button>
     </div>
     <div class="barrel-grid" id="barrelGrid"></div>
   </div>
 
   <div class="page" id="page-lab">
-    <h2 style="margin-bottom:15px">المعمل</h2>
+    <h2 style="margin-bottom: 15px;">المعمل</h2>
     <input type="text" id="prodName" placeholder="اسم المنتج الجديد">
-    <div id="ingList" style="margin-bottom:20px"></div>
-    <div style="background:var(--bg2);padding:20px;border-radius:20px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+    <div id="ingList" style="margin-bottom: 20px;"></div>
+    <div style="background: var(--bg2); padding: 20px; border-radius: 20px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
         <span>الإجمالي:</span>
-        <span id="totalPrice" style="font-weight:800;color:var(--success);font-family:'Space Grotesk'">0.00 ج</span>
+        <span id="totalPrice" style="font-weight: 800; color: var(--success); font-family: 'Space Grotesk';">0.00 ج</span>
       </div>
       <button class="btn btn-success" onclick="buildProduct()">حفظ المنتج</button>
     </div>
   </div>
 
   <div class="page" id="page-products">
-    <h2 style="margin-bottom:15px">منتجاتك</h2>
+    <h2 style="margin-bottom: 15px;">منتجاتك</h2>
     <div id="productsGrid" class="barrel-grid"></div>
   </div>
 </main>
 
-<div class="menu-overlay" id="addOverlay" style="display:none;align-items:center;justify-content:center;padding:20px">
-  <div style="background:#fff;width:100%;border-radius:20px;padding:25px">
-    <h3 style="margin-bottom:15px">إضافة مادة</h3>
-    <input type="text" id="matName" placeholder="اسم المادة" onkeydown="handleEnter(event,'matQty')">
-    <input type="number" id="matQty" placeholder="الكمية (جرام)" onkeydown="handleEnter(event,'matPrice')">
-    <input type="number" id="matPrice" placeholder="سعر الجرام" onkeydown="handleEnter(event,'saveBtn')">
-    <div style="display:flex;gap:10px">
+<!-- Add Material Overlay -->
+<div class="menu-overlay" id="addOverlay" style="display: none; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: #fff; width: 100%; border-radius: 20px; padding: 25px;">
+    <h3 style="margin-bottom: 15px;">إضافة مادة</h3>
+    <input type="text" id="matName" placeholder="اسم المادة" onkeydown="handleEnter(event, 'matQty')">
+    <input type="number" id="matQty" placeholder="الكمية (جرام)" onkeydown="handleEnter(event, 'matPrice')">
+    <input type="number" id="matPrice" placeholder="سعر الجرام" onkeydown="handleEnter(event, 'saveBtn')">
+    <div style="display: flex; gap: 10px;">
       <button id="saveBtn" class="btn btn-primary" onclick="saveMaterial()">حفظ</button>
-      <button class="btn" style="background:var(--bg3)" onclick="closeAdd()">إلغاء</button>
+      <button class="btn btn-ghost" style="background: var(--bg3);" onclick="closeAdd()">إلغاء</button>
     </div>
   </div>
 </div>
+
+<!-- iOS sensor permission button -->
+<button id="sensorBtn" onclick="requestIOSSensors()"> فعّل الحساسات</button>
 
 <div class="toasts" id="toasts"></div>
 
 <script>
 /* =============================================
    DATA
-============================================= */
+   ============================================= */
 let materials = JSON.parse(localStorage.getItem('lab_materials')) || [];
 let products  = JSON.parse(localStorage.getItem('lab_products'))  || [];
 
 /* =============================================
-   3D GRAVITY VECTOR
-   Updated from deviceorientation.
-   x  = left/right lean  (-1 .. +1)
-   y  = front/back lean  (-1 .. +1)
-   z  = up/down          (+1 = normal, -1 = upside-down)
-============================================= */
-const grav = { x: 0, y: 0, z: 1 };
-
-let smGamma = 0, smBeta = 0;
-let prevGamma = 0, prevBeta = 0;
-let shakeEnergy = 0;
-
-/* =============================================
-   PHYSICS MAP
-============================================= */
-const physicsMap = {};
-const CW = 160, CH = 160;
+   LIQUID PHYSICS STATE
+   Each barrel has its own physics object.
+   ============================================= */
+const physicsMap = {};   // keyed by material id
 
 function getPhysics(id) {
   if (!physicsMap[id]) {
     physicsMap[id] = {
-      surfaceY:   CH * 0.4,
-      velY:       0,
-      tiltAngle:  0,
-      tiltVel:    0,
-      waveAmp:    2,
-      waveVel:    0,
-      waveOffset: Math.random() * Math.PI * 2,
-      particles:  []
+      surfaceY:      0,
+      velY:          0,       // vertical bounce velocity
+      tiltAngle:     0,       // current tilt (radians)
+      tiltVel:       0,       // tilt angular velocity
+      waveAmp:       2,       // wave amplitude (px)
+      waveVel:       0,       // wave amplitude velocity
+      waveOffset:    Math.random() * Math.PI * 2,
+      splashParticles: []
     };
   }
   return physicsMap[id];
 }
 
 /* =============================================
-   PHYSICS STEP
-============================================= */
-function stepPhysics(id, fillRatio) {
-  const ph = getPhysics(id);
+   GLOBAL SENSOR STATE
+   ============================================= */
+let gammaSmooth  = 0;   // smoothed left/right tilt (deg)
+let betaSmooth   = 0;   // smoothed front/back tilt  (deg)
+let prevGamma    = 0;
+let prevBeta     = 0;
+let shakeEnergy  = 0;   // accumulated shake (0-3)
+let sensorsReady = false;
 
-  /* When phone is upside-down (gz < 0) liquid "falls" to what is visually
-     the top of the canvas (small Y values). */
-  const gravSign = grav.z >= 0 ? 1 : -1;
-  const targetY  = gravSign > 0
-    ? CH * (1 - fillRatio)   // normal: liquid at bottom
-    : CH * fillRatio;         // inverted: liquid at top
+/* =============================================
+   SENSOR INIT  (Android auto / iOS permission)
+   ============================================= */
+function initSensors() {
+  if (!window.DeviceOrientationEvent && !window.DeviceMotionEvent) return;
 
-  /* vertical spring */
-  ph.velY    += (targetY - ph.surfaceY) * 0.022;
-  ph.velY    *= 0.952;
-  ph.surfaceY += ph.velY;
+  const needsPermission =
+    typeof DeviceOrientationEvent !== 'undefined' &&
+    typeof DeviceOrientationEvent.requestPermission === 'function';
 
-  /* tilt — driven by horizontal gravity component, flipped when inverted */
-  const targetTilt = grav.x * (Math.PI / 2.6) * gravSign;
-  ph.tiltVel += (targetTilt - ph.tiltAngle) * 0.08;
-  ph.tiltVel *= 0.86;
-  ph.tiltAngle += ph.tiltVel;
-
-  /* wave amplitude (resting at 2px, grows with activity) */
-  ph.waveVel += (2 - ph.waveAmp) * 0.04;
-  ph.waveVel *= 0.90;
-  ph.waveAmp += ph.waveVel;
-  ph.waveAmp  = Math.max(0.8, ph.waveAmp);
-
-  const activity = Math.abs(ph.velY) + Math.abs(ph.tiltVel) * 5 + shakeEnergy * 0.5;
-  ph.waveOffset += 0.04 + activity * 0.028;
-
-  /* splash particles on hard shakes */
-  if (shakeEnergy > 0.6 && Math.random() < shakeEnergy * 0.13) {
-    const n = Math.ceil(shakeEnergy * 1.5);
-    for (let k = 0; k < n; k++) {
-      ph.particles.push({
-        x:   CW/2 + (Math.random()-0.5) * CW * 0.5,
-        y:   ph.surfaceY,
-        vx:  (Math.random()-0.5) * 3.5,
-        vy:  -(2 + Math.random()*3 + shakeEnergy) * gravSign,
-        r:   1.5 + Math.random()*2,
-        life: 0.7 + Math.random()*0.5
-      });
-    }
+  if (needsPermission) {
+    // iOS 13+ — show button, wait for user tap
+    document.getElementById('sensorBtn').style.display = 'block';
+  } else {
+    // Android & older browsers — attach directly
+    attachSensorListeners();
   }
+}
 
-  ph.particles = ph.particles.filter(p => {
-    p.x   += p.vx;
-    p.y   += p.vy;
-    p.vy  += 0.3 * gravSign;
-    p.vx  *= 0.97;
-    p.life -= 0.028;
-    return p.life > 0 && p.y > 0 && p.y < CH;
+function requestIOSSensors() {
+  Promise.all([
+    DeviceOrientationEvent.requestPermission(),
+    typeof DeviceMotionEvent.requestPermission === 'function'
+      ? DeviceMotionEvent.requestPermission()
+      : Promise.resolve('granted')
+  ])
+  .then(results => {
+    if (results.every(r => r === 'granted')) {
+      attachSensorListeners();
+      document.getElementById('sensorBtn').style.display = 'none';
+      toast('الحساسات شغالة ✅');
+    } else {
+      toast('لم يتم السماح بالحساسات');
+    }
+  })
+  .catch(() => toast('خطأ في تفعيل الحساسات'));
+}
+
+function attachSensorListeners() {
+  sensorsReady = true;
+
+  // ---- ORIENTATION → tilt + slow rotation shake ----
+  window.addEventListener('deviceorientation', (e) => {
+    const g = e.gamma || 0;   // left/right  -90..90
+    const b = e.beta  || 0;   // front/back -180..180
+
+    // Exponential smoothing  (α=0.18 → fairly responsive but not jittery)
+    gammaSmooth += (g - gammaSmooth) * 0.18;
+    betaSmooth  += (b - betaSmooth)  * 0.18;
+
+    // Rotation-speed shake  (fast turns = shake)
+    const dg = Math.abs(gammaSmooth - prevGamma);
+    const db = Math.abs(betaSmooth  - prevBeta);
+    prevGamma = gammaSmooth;
+    prevBeta  = betaSmooth;
+
+    const rotSpeed = dg + db;
+    if (rotSpeed > 3) injectShake(rotSpeed * 0.04);
+
+    // Apply tilt to all barrels
+    const tiltRad = (gammaSmooth / 90) * (Math.PI / 3);   // max ~60° lean
+    Object.values(physicsMap).forEach(ph => {
+      ph.tiltVel += (tiltRad - ph.tiltAngle) * 0.06;
+    });
+  }, { passive: true });
+
+  // ---- MOTION → acceleration shake ----
+  window.addEventListener('devicemotion', (e) => {
+    const acc = e.accelerationIncludingGravity || e.acceleration;
+    if (!acc) return;
+    const mag = Math.sqrt((acc.x||0)**2 + (acc.y||0)**2 + (acc.z||0)**2);
+    // subtract gravity (~9.8). anything > 14 is a real shake
+    const net = Math.max(0, mag - 9.8);
+    if (net > 4) injectShake(net * 0.06);
+  }, { passive: true });
+}
+
+/* Push energy into all barrels */
+function injectShake(intensity) {
+  shakeEnergy = Math.min(3, shakeEnergy + intensity);
+  Object.values(physicsMap).forEach(ph => {
+    ph.velY    += (Math.random() - 0.5) * intensity * 3;
+    ph.waveVel += intensity * 2;
+    ph.tiltVel += (Math.random() - 0.5) * intensity * 0.12;
   });
 }
 
 /* =============================================
-   DRAW
-============================================= */
+   PHYSICS UPDATE  (called every rAF)
+   ============================================= */
+function stepPhysics(id, fillRatio) {
+  const ph = getPhysics(id);
+  const W = 160, H = 160;
+  const targetY = H * (1 - fillRatio);
+
+  // --- surface bounce ---
+  ph.surfaceY += ph.velY;
+  ph.velY     += (targetY - ph.surfaceY) * 0.018;   // spring
+  ph.velY     *= 0.955;                               // damping
+
+  // --- tilt ---
+  ph.tiltAngle += ph.tiltVel;
+  ph.tiltVel   += (-ph.tiltAngle) * 0.09;            // return to center
+  ph.tiltVel   *= 0.87;
+
+  // --- wave amplitude ---
+  ph.waveAmp += ph.waveVel;
+  ph.waveVel += (1.5 - ph.waveAmp) * 0.04;           // rest amplitude = 1.5px
+  ph.waveVel *= 0.91;
+  ph.waveAmp  = Math.max(0.5, ph.waveAmp);
+
+  // wave offset speed scales with activity
+  const activity = Math.abs(ph.velY) + Math.abs(ph.tiltVel) * 4 + shakeEnergy * 0.5;
+  ph.waveOffset += 0.038 + activity * 0.025;
+
+  // --- spawn splash particles on big shakes ---
+  if (shakeEnergy > 0.5 && Math.random() < shakeEnergy * 0.12) {
+    const sx = W / 2 + (Math.random() - 0.5) * W * 0.55;
+    const sy = ph.surfaceY;
+    const count = Math.ceil(shakeEnergy * 1.5);
+    for (let k = 0; k < count; k++) {
+      ph.splashParticles.push({
+        x:  sx + (Math.random() - 0.5) * 10,
+        y:  sy,
+        vx: (Math.random() - 0.5) * 3.5,
+        vy: -(2 + Math.random() * 3 + shakeEnergy),
+        r:  1.5 + Math.random() * 2,
+        life: 0.7 + Math.random() * 0.5
+      });
+    }
+  }
+
+  // --- tick particles ---
+  ph.splashParticles = ph.splashParticles.filter(p => {
+    p.x   += p.vx;
+    p.y   += p.vy;
+    p.vy  += 0.28;          // gravity
+    p.vx  *= 0.97;
+    p.life -= 0.028;
+    return p.life > 0 && p.y < H;
+  });
+}
+
+/* decay global shake each frame */
+function decayShake() {
+  shakeEnergy *= 0.92;
+}
+
+/* =============================================
+   DRAW  (called every rAF)
+   ============================================= */
 function drawBarrel(canvas, color, fillRatio) {
   const id  = canvas.dataset.matid;
   const ctx = canvas.getContext('2d');
-  canvas.width  = CW;
-  canvas.height = CH;
-  const R  = CW / 2;
-  const ph = getPhysics(id);
+  const W   = canvas.width  = 160;
+  const H   = canvas.height = 160;
+  const R   = W / 2;
+  const ph  = getPhysics(id);
 
-  ctx.clearRect(0, 0, CW, CH);
+  ctx.clearRect(0, 0, W, H);
 
-  /* clip to circle */
+  /* circular clip */
   ctx.save();
   ctx.beginPath();
-  ctx.arc(R, R, R-1, 0, Math.PI*2);
+  ctx.arc(R, R, R - 1, 0, Math.PI * 2);
   ctx.clip();
 
-  /* bg tint */
-  ctx.fillStyle = color + '25';
-  ctx.fillRect(0, 0, CW, CH);
+  /* background tint */
+  ctx.fillStyle = color + '28';
+  ctx.fillRect(0, 0, W, H);
 
+  /* --- build liquid surface path --- */
   const baseY     = ph.surfaceY;
   const amp       = ph.waveAmp;
-  const tiltSlope = Math.sin(ph.tiltAngle) * CH * 0.38;
+  const tiltSlope = Math.sin(ph.tiltAngle) * (H * 0.32);  // horizontal level change
 
-  /* helper: build surface path and fill downward */
-  const fillLiquid = (extraAmp, alpha, fillCol) => {
-    ctx.beginPath();
-    ctx.moveTo(0, CH);
-    ctx.lineTo(0, baseY - tiltSlope*0.5 + Math.sin(ph.waveOffset)*amp);
-    for (let x = 0; x <= CW; x += 2) {
-      const t   = x / CW;
-      const lvl = baseY + (t - 0.5) * tiltSlope * 2;
-      const w1  = Math.sin(t*Math.PI*3.0 + ph.waveOffset)       * (amp+extraAmp);
-      const w2  = Math.sin(t*Math.PI*5.3 - ph.waveOffset*1.4)   * (amp+extraAmp) * 0.36;
-      const w3  = Math.sin(t*Math.PI*8.7 + ph.waveOffset*0.68)  * (amp+extraAmp) * 0.16;
-      ctx.lineTo(x, lvl + w1 + w2 + w3);
-    }
-    ctx.lineTo(CW, CH);
-    ctx.closePath();
-    ctx.fillStyle   = fillCol;
-    ctx.globalAlpha = alpha;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  };
-
-  fillLiquid(0,   0.90, color + 'cc');   /* main fill */
-  fillLiquid(1.8, 0.35, color + '66');   /* secondary shimmer */
-
-  /* surface gloss line */
   ctx.beginPath();
-  for (let x = 0; x <= CW; x += 2) {
-    const t   = x / CW;
+  ctx.moveTo(0, H);
+  ctx.lineTo(0, baseY - tiltSlope * 0.5 + Math.sin(ph.waveOffset) * amp);
+
+  for (let x = 0; x <= W; x += 2) {
+    const t   = x / W;
     const lvl = baseY + (t - 0.5) * tiltSlope * 2;
-    const w1  = Math.sin(t*Math.PI*3.0 + ph.waveOffset) * amp;
-    const w2  = Math.sin(t*Math.PI*5.3 - ph.waveOffset*1.4) * amp * 0.36;
-    if (x===0) ctx.moveTo(x, lvl+w1+w2);
-    else       ctx.lineTo(x, lvl+w1+w2);
+    const w1  = Math.sin(t * Math.PI * 3.0 + ph.waveOffset)         * amp;
+    const w2  = Math.sin(t * Math.PI * 5.2 - ph.waveOffset * 1.35)  * amp * 0.38;
+    const w3  = Math.sin(t * Math.PI * 8.1 + ph.waveOffset * 0.65)  * amp * 0.18;
+    ctx.lineTo(x, lvl + w1 + w2 + w3);
+  }
+
+  ctx.lineTo(W, H);
+  ctx.closePath();
+  ctx.fillStyle   = color + 'cc';
+  ctx.globalAlpha = 0.92;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  /* --- glossy surface line --- */
+  ctx.beginPath();
+  for (let x = 0; x <= W; x += 2) {
+    const t   = x / W;
+    const lvl = baseY + (t - 0.5) * tiltSlope * 2;
+    const w1  = Math.sin(t * Math.PI * 3.0 + ph.waveOffset)        * amp;
+    const w2  = Math.sin(t * Math.PI * 5.2 - ph.waveOffset * 1.35) * amp * 0.38;
+    if (x === 0) ctx.moveTo(x, lvl + w1 + w2);
+    else         ctx.lineTo(x, lvl + w1 + w2);
   }
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth   = 1.8;
-  ctx.globalAlpha = 0.36;
+  ctx.lineWidth   = 1.4;
+  ctx.globalAlpha = 0.35;
   ctx.stroke();
   ctx.globalAlpha = 1;
 
-  /* particles */
-  ph.particles.forEach(p => {
-    const a = Math.max(0, Math.floor(p.life*210)).toString(16).padStart(2,'0');
+  /* --- splash particles --- */
+  ph.splashParticles.forEach(p => {
+    const alpha = Math.floor(p.life * 220).toString(16).padStart(2, '0');
     ctx.beginPath();
-    ctx.arc(p.x, p.y, Math.max(0.1, p.r*p.life), 0, Math.PI*2);
-    ctx.fillStyle = color + a;
+    ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+    ctx.fillStyle = color + alpha;
     ctx.fill();
   });
 
@@ -329,148 +460,41 @@ function drawBarrel(canvas, color, fillRatio) {
 
   /* barrel ring */
   ctx.beginPath();
-  ctx.arc(R, R, R-1, 0, Math.PI*2);
-  ctx.strokeStyle = color + '77';
+  ctx.arc(R, R, R - 1, 0, Math.PI * 2);
+  ctx.strokeStyle = color + '88';
   ctx.lineWidth   = 2;
   ctx.stroke();
 }
 
 /* =============================================
    ANIMATION LOOP
-============================================= */
-let loopRunning = false;
+   ============================================= */
+let animFrameId = null;
+
 function startLoop() {
-  if (loopRunning) return;
-  loopRunning = true;
-  (function frame() {
-    shakeEnergy *= 0.91;
+  if (animFrameId) return;
+  function frame() {
+    decayShake();
+    // iterate all rendered canvases in the inventory page
     document.querySelectorAll('#barrelGrid canvas').forEach(c => {
       const m = materials.find(x => x.id == c.dataset.matid);
       if (!m) return;
-      const fill = Math.min(1, m.qty / 500);
-      stepPhysics(m.id, fill);
-      drawBarrel(c, m.color, fill);
+      stepPhysics(m.id, Math.min(1, m.qty / 500));
+      drawBarrel(c, m.color, Math.min(1, m.qty / 500));
     });
-    requestAnimationFrame(frame);
-  })();
-}
-
-/* =============================================
-   SENSOR INIT
-   - Android: attach immediately, no permission needed
-   - iOS 13+:
-       • Already granted (localStorage)? silently re-request (iOS requires
-         requestPermission on every page load, but if granted it resolves
-         instantly without a dialog) then attach.
-       • Never asked? show one-time modal.
-============================================= */
-function initSensors() {
-  const isIOS = typeof DeviceOrientationEvent !== 'undefined' &&
-                typeof DeviceOrientationEvent.requestPermission === 'function';
-
-  if (!isIOS) {
-    attachSensorListeners();
-    return;
+    animFrameId = requestAnimationFrame(frame);
   }
-
-  const prev = localStorage.getItem('sensorPermission');
-  if (prev === 'granted') {
-    /* iOS needs requestPermission on every load, but it won't show a dialog
-       if already granted — resolves instantly */
-    DeviceOrientationEvent.requestPermission()
-      .then(r => {
-        if (r === 'granted') {
-          attachSensorListeners();
-        } else {
-          /* permission was revoked by user in settings — reset and show modal */
-          localStorage.removeItem('sensorPermission');
-          showPermModal();
-        }
-      })
-      .catch(() => showPermModal());
-  } else {
-    showPermModal();
-  }
-}
-
-function showPermModal() {
-  document.getElementById('permModal').classList.remove('hidden');
-}
-
-function grantIOSPermission() {
-  const p1 = DeviceOrientationEvent.requestPermission();
-  const p2 = typeof DeviceMotionEvent.requestPermission === 'function'
-    ? DeviceMotionEvent.requestPermission()
-    : Promise.resolve('granted');
-
-  Promise.all([p1, p2]).then(([r1]) => {
-    document.getElementById('permModal').classList.add('hidden');
-    if (r1 === 'granted') {
-      localStorage.setItem('sensorPermission', 'granted');
-      attachSensorListeners();
-      toast('الحساسات شغالة ✅');
-    } else {
-      toast('مش مسموح — السائل لن يتحرك');
-    }
-  }).catch(() => {
-    document.getElementById('permModal').classList.add('hidden');
-    toast('خطأ في تفعيل الحساسات');
-  });
+  animFrameId = requestAnimationFrame(frame);
 }
 
 /* =============================================
-   SENSOR LISTENERS
-   Convert beta/gamma → real 3D gravity vector.
-
-   Coordinate system (W3C deviceorientation):
-     gamma : left(-90)→right(+90)   = rotation around Z  (portrait)
-     beta  : face-up(0), upright(90), upside-down(±180/-90 region)
-
-   Gravity vector derivation:
-     gx = sin(gamma)                   left/right component
-     gz = cos(beta) * cos(gamma)       down component  (+1=normal, -1=inverted)
-     gy = sin(beta) * cos(gamma)       front/back component
-============================================= */
-function attachSensorListeners() {
-  window.addEventListener('deviceorientation', e => {
-    const rawG = e.gamma ?? 0;   // left/right  -90..90
-    const rawB = e.beta  ?? 0;   // front/back -180..180
-
-    smGamma += (rawG - smGamma) * 0.16;
-    smBeta  += (rawB - smBeta)  * 0.16;
-
-    const gRad = smGamma * Math.PI / 180;
-    const bRad = smBeta  * Math.PI / 180;
-
-    grav.x = Math.sin(gRad);
-    grav.y = Math.sin(bRad) * Math.cos(gRad);
-    grav.z = Math.cos(bRad) * Math.cos(gRad);
-
-    /* fast rotation = shake */
-    const dg = Math.abs(smGamma - prevGamma);
-    const db = Math.abs(smBeta  - prevBeta);
-    prevGamma = smGamma; prevBeta = smBeta;
-    const rotSpeed = dg + db;
-    if (rotSpeed > 4) shakeEnergy = Math.min(3, shakeEnergy + rotSpeed * 0.035);
-
-  }, { passive: true });
-
-  window.addEventListener('devicemotion', e => {
-    const acc = e.accelerationIncludingGravity || e.acceleration;
-    if (!acc) return;
-    const mag = Math.sqrt((acc.x||0)**2 + (acc.y||0)**2 + (acc.z||0)**2);
-    const net = Math.max(0, mag - 9.8);
-    if (net > 5) shakeEnergy = Math.min(3, shakeEnergy + net * 0.07);
-  }, { passive: true });
-}
-
-/* =============================================
-   NAV & MENU
-============================================= */
+   NAVIGATION & MENU
+   ============================================= */
 function toggleMenu() {
   document.getElementById('sideMenu').classList.toggle('open');
   document.getElementById('menuOverlay').classList.toggle('show');
 }
+
 function navTo(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
@@ -483,8 +507,8 @@ function navTo(pageId) {
 }
 
 /* =============================================
-   INVENTORY
-============================================= */
+   INVENTORY RENDER
+   ============================================= */
 function renderInventory() {
   const grid = document.getElementById('barrelGrid');
   grid.innerHTML = materials.map(m => `
@@ -492,20 +516,24 @@ function renderInventory() {
       <div class="barrel-wrap">
         <canvas data-matid="${m.id}"></canvas>
       </div>
-      <div style="font-weight:800;font-size:14px">${m.name}</div>
-      <div style="font-size:12px;color:var(--text2)">${m.qty}g</div>
+      <div style="font-weight:800; font-size:14px">${m.name}</div>
+      <div style="font-size:12px; color:var(--text2)">${m.qty}g</div>
       <button class="btn btn-danger" onclick="deleteMat(${m.id})">حذف</button>
     </div>
   `).join('');
+
+  // initialise physics surface for each barrel
   materials.forEach(m => {
-    getPhysics(m.id).surfaceY = CH * (1 - Math.min(1, m.qty / 500));
+    const ph = getPhysics(m.id);
+    ph.surfaceY = 160 * (1 - Math.min(1, m.qty / 500));
   });
+
   startLoop();
 }
 
 /* =============================================
    ADD / DELETE MATERIAL
-============================================= */
+   ============================================= */
 function openAdd() {
   document.getElementById('addOverlay').style.display = 'flex';
   document.getElementById('matName').focus();
@@ -513,33 +541,48 @@ function openAdd() {
 function closeAdd() {
   document.getElementById('addOverlay').style.display = 'none';
 }
+
 function handleEnter(event, nextId) {
-  if (event.key !== 'Enter') return;
-  event.preventDefault();
-  const n = document.getElementById(nextId);
-  if (n) { n.focus(); if (nextId === 'saveBtn') saveMaterial(); }
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const next = document.getElementById(nextId);
+    if (next) {
+      next.focus();
+      if (nextId === 'saveBtn') saveMaterial();
+    }
+  }
 }
+
 function saveMaterial() {
-  const nameEl  = document.getElementById('matName');
-  const qtyEl   = document.getElementById('matQty');
-  const priceEl = document.getElementById('matPrice');
-  const name    = nameEl.value.trim();
-  const qty     = parseFloat(qtyEl.value);
-  const price   = parseFloat(priceEl.value);
-  if (!name || isNaN(qty))  return toast('أكمل البيانات');
+  const nameInput  = document.getElementById('matName');
+  const qtyInput   = document.getElementById('matQty');
+  const priceInput = document.getElementById('matPrice');
+
+  const name  = nameInput.value.trim();
+  const qty   = parseFloat(qtyInput.value);
+  const price = parseFloat(priceInput.value);
+
+  if (!name || isNaN(qty)) return toast('أكمل البيانات');
   if (materials.some(m => m.name.toLowerCase() === name.toLowerCase()))
     return toast('هذه المادة موجودة بالفعل');
-  const palette = ['#4fc3f7','#ff8a65','#4db6ac','#ba68c8','#ffd54f','#f48fb1','#a5d6a7','#ffcc80'];
-  const color   = palette[materials.length % palette.length];
-  const newMat  = { id: Date.now(), name, qty, price, color };
+
+  const brightColors = ['#4fc3f7', '#ff8a65', '#4db6ac', '#ba68c8', '#ffd54f', '#f48fb1', '#a5d6a7', '#ffcc80'];
+  const color = brightColors[materials.length % brightColors.length];
+
+  const newMat = { id: Date.now(), name, qty, price, color };
   materials.push(newMat);
   localStorage.setItem('lab_materials', JSON.stringify(materials));
-  getPhysics(newMat.id).surfaceY = CH * (1 - Math.min(1, qty / 500));
-  nameEl.value = ''; qtyEl.value = ''; priceEl.value = '';
+
+  // init physics for new barrel
+  const ph = getPhysics(newMat.id);
+  ph.surfaceY = 160 * (1 - Math.min(1, qty / 500));
+
+  nameInput.value = ''; qtyInput.value = ''; priceInput.value = '';
   closeAdd();
   renderInventory();
   toast('تمت الإضافة بنجاح ✅');
 }
+
 function deleteMat(id) {
   materials = materials.filter(m => m.id !== id);
   localStorage.setItem('lab_materials', JSON.stringify(materials));
@@ -548,42 +591,47 @@ function deleteMat(id) {
 }
 
 /* =============================================
-   LAB
-============================================= */
+   LAB PAGE
+   ============================================= */
 function renderLab() {
-  document.getElementById('ingList').innerHTML = materials.map(m => `
+  const list = document.getElementById('ingList');
+  list.innerHTML = materials.map(m => `
     <div class="ing-item">
       <div>
         <div style="font-weight:700">${m.name}</div>
-        <div style="font-size:11px;color:var(--text2)">متاح: ${m.qty}g</div>
+        <div style="font-size:11px; color:var(--text2)">متاح: ${m.qty}g</div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px">
+      <div style="display:flex; align-items:center; gap:10px">
         <input type="number" class="ing-qty-input" placeholder="0" data-id="${m.id}" oninput="calcTotal()">
         <span style="font-size:12px">ج</span>
       </div>
     </div>
   `).join('');
 }
+
 function calcTotal() {
   let total = 0;
-  document.querySelectorAll('.ing-qty-input').forEach(inp => {
-    const g = parseFloat(inp.value) || 0;
-    const m = materials.find(x => x.id == inp.dataset.id);
+  document.querySelectorAll('.ing-qty-input').forEach(input => {
+    const g = parseFloat(input.value) || 0;
+    const m = materials.find(x => x.id == input.dataset.id);
     total += g * (m ? m.price : 0);
   });
   document.getElementById('totalPrice').textContent = total.toFixed(2) + ' ج';
 }
+
 function buildProduct() {
   const name = document.getElementById('prodName').value.trim();
   if (!name) return toast('أدخل اسم المنتج');
+
   let total = 0;
-  document.querySelectorAll('.ing-qty-input').forEach(inp => {
-    const g = parseFloat(inp.value) || 0;
+  document.querySelectorAll('.ing-qty-input').forEach(input => {
+    const g = parseFloat(input.value) || 0;
     if (g > 0) {
-      const m = materials.find(x => x.id == inp.dataset.id);
+      const m = materials.find(x => x.id == input.dataset.id);
       if (m) { m.qty -= g; total += g * m.price; }
     }
   });
+
   products.push({ name, total, date: new Date().toLocaleDateString('ar-EG') });
   localStorage.setItem('lab_materials', JSON.stringify(materials));
   localStorage.setItem('lab_products',  JSON.stringify(products));
@@ -592,31 +640,33 @@ function buildProduct() {
 }
 
 /* =============================================
-   PRODUCTS
-============================================= */
+   PRODUCTS PAGE
+   ============================================= */
 function renderProducts() {
-  document.getElementById('productsGrid').innerHTML = products.map(p => `
-    <div class="barrel-card" style="text-align:right;align-items:flex-start;padding:20px">
-      <div style="font-weight:800;font-size:16px;margin-bottom:5px">${p.name}</div>
-      <div style="color:var(--success);font-weight:700">${p.total.toFixed(2)} ج</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:10px">${p.date}</div>
+  const grid = document.getElementById('productsGrid');
+  grid.innerHTML = products.map(p => `
+    <div class="barrel-card" style="text-align:right; align-items:flex-start; padding:20px">
+      <div style="font-weight:800; font-size:16px; margin-bottom:5px">${p.name}</div>
+      <div style="color:var(--success); font-weight:700">${p.total.toFixed(2)} ج</div>
+      <div style="font-size:11px; color:var(--text2); margin-top:10px">${p.date}</div>
     </div>
   `).join('');
 }
 
 /* =============================================
    TOAST
-============================================= */
+   ============================================= */
 function toast(msg) {
   const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
+  t.className   = 'toast';
+  t.textContent = msg;
   document.getElementById('toasts').appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
 
 /* =============================================
    BOOT
-============================================= */
+   ============================================= */
 renderInventory();
 initSensors();
 </script>
